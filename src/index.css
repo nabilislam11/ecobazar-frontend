@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply font-sans text-gray-900 antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-success;
+  }
+}
+
+@layer utilities {
+  .container-page {
+    @apply max-w-container mx-auto px-4 sm:px-6 lg:px-0;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
