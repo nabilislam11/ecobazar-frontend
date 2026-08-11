@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from 'react';
-import { registerUser } from '../services/authService';
+import { loginUser, registerUser } from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -18,6 +18,28 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
+  const login = async (data) => {
+    setLoading(true)
+    try {
+      const response = await loginUser(data)
+      // পরে backend token দিলে এখানে save করবে
+      // if (response?.token) {
+      //   localStorage.setItem(
+      //     'ecobazar_token',
+      //     response.token
+      //   );
+      // }
+      // if (response?.user) {
+      //   setUser(response.user);
+
+      //   localStorage.setItem(
+      //     'ecobazar_user',
+      //     JSON.stringify(response.user)
+      //   );
+      // }
+      return response
+    } finally { setLoading(false) }
+  }
 
   const logout = () => {
     localStorage.removeItem('ecobazar_token');
@@ -31,6 +53,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         loading,
+        login,
         register,
         logout,
         setUser,
