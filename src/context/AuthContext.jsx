@@ -1,43 +1,52 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import * as authService from '../services/authService';
+import { createContext, useContext, useState } from 'react';
+import { registerUser } from '../services/authService';
 
 const AuthContext = createContext(null);
-const KEY = 'ecobazar_auth';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(KEY);
-    if (saved) setUser(JSON.parse(saved));
-    setLoading(false);
-  }, []);
+  const register = async (data) => {
+    setLoading(true);
 
-  const login = async (email, password) => {
-    const { user: u } = await authService.login(email, password);
-    setUser(u);
-    localStorage.setItem(KEY, JSON.stringify(u));
-    return u;
-  };
+    try {
+      const response = await registerUser(data);
 
-  const register = async (payload) => {
-    const { user: u } = await authService.register(payload);
-    setUser(u);
-    localStorage.setItem(KEY, JSON.stringify(u));
-    return u;
+      return response;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem('ecobazar_token');
+    localStorage.removeItem('ecobazar_user');
+
     setUser(null);
-    localStorage.removeItem(KEY);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        register,
+        logout,
+        setUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error('useAuth must be used inside AuthProvider');
+  }
+
+  return context;
+}

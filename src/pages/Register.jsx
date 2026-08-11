@@ -24,18 +24,47 @@ export default function Register() {
       console.log('Registration data:', data);
 
       // Register user
-      await signUp(data);
+      const response = await signUp(data);
+      console.log("Register response ", response);
+
 
       // Success message
-      toast.success('Account created successfully!');
+      toast.success(response?.message || 'Account created successfully! Please verify your email.');
 
       // Redirect to account page
       navigate('/login');
     } catch (error) {
       console.error('Registration error:', error);
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      if (status === 429) {
+        toast.error(
+          message ||
+          'Too many registration attempts. Please try again later.'
+        );
+        return;
+      }
+
+      if (status === 401) {
+        toast.error(
+          message ||
+          'This email is already registered.'
+        );
+        return;
+      }
+
+      if (status === 400) {
+        toast.error(
+          message ||
+          'Please check your information and try again.'
+        );
+        return;
+      }
 
       toast.error(
-        error?.message || 'Registration failed. Please try again.'
+        message ||
+        'Registration failed. Please try again.'
       );
     }
   };
@@ -110,6 +139,17 @@ export default function Register() {
               },
             })}
             error={errors.password?.message}
+          />
+          {/* confirmpassword  */}
+          <Input
+            label="Confirm Password"
+            type="password"
+            {...register('confirmPassword', {
+              required: 'Confirm password is required',
+              validate: (value, formValues) =>
+                value === formValues.password || 'Passwords do not match',
+            })}
+            error={errors.confirmPassword?.message}
           />
         </div>
 
