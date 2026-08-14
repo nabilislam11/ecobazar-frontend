@@ -4,7 +4,11 @@ import { loginUser, registerUser } from '../services/authService';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('ecobazar_user');
+
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [loading, setLoading] = useState(false);
 
   const register = async (data) => {
@@ -29,14 +33,14 @@ export function AuthProvider({ children }) {
       //     response.token
       //   );
       // }
-      // if (response?.user) {
-      //   setUser(response.user);
+      if (response?.data) {
+        setUser(response?.data);
 
-      //   localStorage.setItem(
-      //     'ecobazar_user',
-      //     JSON.stringify(response.user)
-      //   );
-      // }
+        localStorage.setItem(
+          'ecobazar_user',
+          JSON.stringify(response?.data)
+        );
+      }
       return response
     } finally { setLoading(false) }
   }
@@ -47,12 +51,13 @@ export function AuthProvider({ children }) {
 
     setUser(null);
   };
-
+  const isAuthenticated = !!user;
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
+        isAuthenticated,
         login,
         register,
         logout,

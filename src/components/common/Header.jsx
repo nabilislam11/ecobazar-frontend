@@ -20,7 +20,7 @@ export default function Header() {
   const navigate = useNavigate();
   const { subtotal, count } = useCart();
   const { count: wishlistCount } = useWishlist();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -41,7 +41,7 @@ export default function Header() {
             <span className="flex items-center gap-1">USD <ChevronDown size={10} /></span>
             <span className="h-4 w-px bg-gray-100" />
             {isAuthenticated ? (
-              <Link to="/account" className="hover:text-success">My Account</Link>
+              <Link to="/account" className="hover:text-success">{user?.firstName || " My Account"}</Link>
             ) : (
               <span className="flex gap-1">
                 <Link to="/login" className="hover:text-success">Sign In</Link>/

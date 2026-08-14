@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useLocation, replace } from 'react-router-dom';
+import { Link, useNavigate, useLocation, replace, json } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import Input from '../components/common/Input';
@@ -14,11 +14,10 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       const response = await login(data);
-      console.log(response);
-
+      console.log(response.data);
       toast.success(response?.message, 'Welcome back!');
-      navigate(location.state?.from?.pathname ?? '/account');
-      { replace: true }
+      navigate(location.state?.from?.pathname ?? '/account',
+        { replace: true })
     } catch (error) {
       console.error('Login error:', error);
 

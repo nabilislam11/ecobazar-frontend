@@ -21,7 +21,7 @@ export default function AdminHeader() {
           <span className="hidden text-small text-gray-700 sm:inline">{admin?.email}</span>
         </div>
         <button
-          onClick={() => { logout(); navigate('/admin/login'); }}
+          onClick={() => { logout(); navigate('/'); }}
           className="flex items-center gap-1 text-small text-gray-500 hover:text-error"
         >
           <LogOut size={16} />
