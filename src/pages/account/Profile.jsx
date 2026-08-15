@@ -18,9 +18,6 @@ export default function Profile() {
 
   const onSubmit = async (data) => {
     try {
-      console.log('USER:', user);
-      console.log('USER ID:', user?._id);
-      console.log('FORM DATA:', data);
       const response = await updateProfile(user._id, data);
 
       console.log('Updated user:', response);
@@ -33,30 +30,15 @@ export default function Profile() {
         'ecobazar_user',
         JSON.stringify(response.userData)
       );
-
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Profile update error:', error);
-
-      console.log(
-        'UPDATE URL:',
-        error.config?.baseURL + error.config?.url
-      );
-
-      console.log('STATUS:', error.response?.status);
-
-      console.log(
-        'SERVER RESPONSE:',
-        error.response?.data
-      );
-
       toast.error(
         error.response?.data?.message ||
         'Failed to update profile'
       );
     }
   };
-
   return (
     <div className="rounded-lg border border-gray-100 p-6">
       <h1 className="mb-6 text-xl font-semibold text-gray-900">

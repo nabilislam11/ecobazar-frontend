@@ -13,3 +13,14 @@ export const updateProfile = async (id, data) => {
   const response = await api.put(`/auth/updateuser/${id} `, data);
   return response.data;
 };
+export const forgotPassword = async (email) => {
+  const response = await api.post("/auth/forgotpassword", {
+    email,
+  });
+  return response.data;
+};
+export const resetPassword = async (token, data) => {
+  const response = await api.post(`/auth/resetpassword/${token}`, data);
+
+  return response.data;
+};

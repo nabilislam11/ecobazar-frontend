@@ -37,7 +37,7 @@ export default function Login() {
           <Input label="Password" type="password" {...register('password', { required: true })} error={errors.password && 'Password is required'} />
         </div>
         <div className="mt-2 text-right">
-          <Link to="/forgot-password" className="text-tiny text-success">Forgot password?</Link>
+          <Link to="/forgotpassword" className="text-tiny text-success">Forgot password?</Link>
         </div>
         <Button type="submit" size="lg" className="mt-6 w-full" disabled={loading}> {loading ? 'Signing In...' : 'Sign In'}</Button>
         <p className="mt-4 text-center text-small text-gray-400">
