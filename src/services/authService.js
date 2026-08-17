@@ -24,3 +24,11 @@ export const resetPassword = async (token, data) => {
 
   return response.data;
 };
+export const getAllUsers = async (id) => {
+  const response = await api.get("/auth/alluser");
+  return response.data;
+};
+export const deleteUser = async (id) => {
+  const response = await api.delete(`/auth/deletuser/${id}`);
+  return response.data;
+};

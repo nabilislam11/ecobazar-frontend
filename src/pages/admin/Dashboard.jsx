@@ -8,6 +8,7 @@ import AdminStatsCard from '../../components/admin/AdminStatsCard';
 import OrderStatusBadge from '../../components/admin/OrderStatusBadge';
 
 export default function Dashboard() {
+
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
 
