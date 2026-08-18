@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-
+import { Eye } from 'lucide-react';
 import {
   getAllUsers,
   holdUser,
@@ -12,7 +12,7 @@ export default function CustomersList() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
-
+  const [selectedUser, setSelectedUser] = useState(null);
   // =========================
   // GET ALL USERS
   // =========================
@@ -287,17 +287,39 @@ export default function CustomersList() {
                     )}
                   </td>
 
-                  {/* Hold / Active Status */}
                   <td className="px-4 py-4">
-                    {user.isHold ? (
-                      <span className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600">
-                        On Hold
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-green-50 px-3 py-1 text-xs text-green-600">
-                        Active
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+
+                      {/* View Details */}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUser(user)}
+                        className="rounded-md bg-blue-50 p-2 text-blue-600 hover:bg-blue-100"
+                        title="View customer details"
+                      >
+                        <Eye size={17} />
+                      </button>
+
+                      {/* Hold / Active */}
+                      {user.isHold ? (
+                        <button
+                          type="button"
+                          onClick={() => handleActive(user._id)}
+                          className="rounded-md bg-green-50 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-100"
+                        >
+                          Active
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleHold(user._id)}
+                          className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100"
+                        >
+                          Hold
+                        </button>
+                      )}
+
+                    </div>
                   </td>
 
                   {/* Role */}
@@ -337,6 +359,243 @@ export default function CustomersList() {
             </tbody>
 
           </table>
+          {selectedUser && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setSelectedUser(null)}
+            >
+              <div
+                className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* ================= HEADER ================= */}
+                <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-gray-900">
+                      Customer Details
+                    </h2>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      View complete information about this customer
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUser(null)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* ================= PROFILE HEADER ================= */}
+                <div className="border-b border-gray-100 px-6 py-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                    <div className="flex items-center gap-4">
+                      {/* Avatar */}
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-xl font-semibold text-green-700">
+                        {selectedUser.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                        {selectedUser.lastName?.charAt(0)?.toUpperCase() || ''}
+                      </div>
+
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900">
+                          {selectedUser.firstName || ''}{' '}
+                          {selectedUser.lastName || ''}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                          {selectedUser.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex gap-2">
+                      {selectedUser.isVerified ? (
+                        <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600">
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-yellow-50 px-3 py-1.5 text-xs font-medium text-yellow-600">
+                          Unverified
+                        </span>
+                      )}
+
+                      {selectedUser.isHold ? (
+                        <span className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600">
+                          On Hold
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600">
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* ================= PERSONAL INFORMATION ================= */}
+                <div className="px-6 py-6">
+
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                    Personal Information
+                  </h3>
+
+                  <div className="grid grid-cols-1 gap-5 rounded-xl border border-gray-100 p-5 sm:grid-cols-2">
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        First Name
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.firstName || 'N/A'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Last Name
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.lastName || 'N/A'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Email Address
+                      </p>
+
+                      <p className="mt-1 break-all text-sm text-gray-900">
+                        {selectedUser.email || 'N/A'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Phone Number
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.phoneNumber || 'N/A'}
+                      </p>
+                    </div>
+
+                  </div>
+                  {/* ================= ACCOUNT INFORMATION ================= */}
+
+                  <h3 className="mb-4 mt-7 text-lg font-semibold text-gray-900">
+                    Account Information
+                  </h3>
+
+                  <div className="grid grid-cols-1 gap-5 rounded-xl border border-gray-100 p-5 sm:grid-cols-3">
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        User ID
+                      </p>
+
+                      <p className="mt-1 break-all text-xs text-gray-900">
+                        {selectedUser._id}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Role
+                      </p>
+
+                      <p className="mt-1 text-sm font-medium capitalize text-gray-900">
+                        {selectedUser.role || 'user'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Email Verification
+                      </p>
+
+                      <p
+                        className={`mt-1 text-sm font-medium ${selectedUser.isVerified
+                            ? 'text-green-600'
+                            : 'text-yellow-600'
+                          }`}
+                      >
+                        {selectedUser.isVerified
+                          ? 'Verified'
+                          : 'Not Verified'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Account Status
+                      </p>
+
+                      <p
+                        className={`mt-1 text-sm font-medium ${selectedUser.isHold
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                          }`}
+                      >
+                        {selectedUser.isHold
+                          ? 'On Hold'
+                          : 'Active'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Created At
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.createdAt
+                          ? new Date(
+                            selectedUser.createdAt
+                          ).toLocaleDateString()
+                          : 'N/A'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">
+                        Updated At
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.updatedAt
+                          ? new Date(
+                            selectedUser.updatedAt
+                          ).toLocaleDateString()
+                          : 'N/A'}
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* ================= FOOTER ================= */}
+                <div className="flex justify-end border-t border-gray-100 px-6 py-4">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUser(null)}
+                    className="rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                  >
+                    Close
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

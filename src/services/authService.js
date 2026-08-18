@@ -43,3 +43,7 @@ export const searchUser = async (searchText) => {
 
   return response.data;
 };
+export const getUserOrders = async (userId) => {
+  const response = await api.get(`/auth/user-orders/${userId}`);
+  return response.data;
+};
