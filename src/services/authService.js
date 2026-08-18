@@ -32,3 +32,14 @@ export const deleteUser = async (id) => {
   const response = await api.delete(`/auth/deletuser/${id}`);
   return response.data;
 };
+export const holdUser = async (id) => {
+  const response = await api.put(`/auth/holduser/${id}`);
+  return response.data;
+};
+export const searchUser = async (searchText) => {
+  const response = await api.post("/auth/searchuser", {
+    value: searchText,
+  });
+
+  return response.data;
+};
