@@ -1,16 +1,47 @@
-import { ChevronDown } from 'lucide-react';
+import React, { forwardRef } from "react";
 
-export default function Select({ label, className = '', ...props }) {
-  return (
-    <label className="block">
-      {label && <span className="mb-2 block text-small text-gray-900">{label}</span>}
-      <div className="relative">
+const Select = forwardRef(
+  (
+    {
+      label,
+      error,
+      children,
+      className = "",
+      ...props
+    },
+    ref
+  ) => {
+    return (
+      <div className="w-full">
+        {label && (
+          <label className="mb-2 block text-sm font-medium text-gray-900">
+            {label}
+          </label>
+        )}
+
         <select
-          className={`w-full appearance-none rounded border border-gray-100 bg-white px-4 py-3 text-small text-gray-900 focus:border-success ${className}`}
+          ref={ref}
           {...props}
-        />
-        <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          className={`w-full rounded border px-4 py-3 text-sm outline-none transition
+            ${error
+              ? "border-red-500"
+              : "border-gray-200 focus:border-green-500"
+            }
+            ${className}`}
+        >
+          {children}
+        </select>
+
+        {error && (
+          <p className="mt-1 text-xs text-red-500">
+            {error}
+          </p>
+        )}
       </div>
-    </label>
-  );
-}
+    );
+  }
+);
+
+Select.displayName = "Select";
+
+export default Select;

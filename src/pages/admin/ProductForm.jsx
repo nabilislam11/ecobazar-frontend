@@ -1,95 +1,902 @@
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import * as productService from '../../services/productService';
-import * as categoryService from '../../services/categoryService';
-import * as brandService from '../../services/brandService';
-import { useState } from 'react';
-import Input from '../../components/common/Input';
-import Select from '../../components/common/Select';
-import Button from '../../components/common/Button';
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+
+import * as productService from "../../services/productService";
+import * as categoryService from "../../services/categoryService";
+import * as brandService from "../../services/brandService";
+
+import Input from "../../components/common/Input";
+import Select from "../../components/common/Select";
+import Button from "../../components/common/Button";
 
 export default function ProductForm({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // =========================
+  // STATES
+  // =========================
+
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { status: 'active', featured: false },
+
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [mainImageIndex, setMainImageIndex] = useState(0);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    defaultValues: {
+      title: "",
+      description: "",
+      shortDescription: "",
+      price: "",
+      stock: "",
+      discountType: "none",
+      discount: 0,
+      brand: "",
+      category: "",
+      subCategory: "",
+      status: "pending",
+      tag: "",
+    },
   });
 
+  const discountType = watch("discountType");
+
+  // =========================
+  // LOAD CATEGORIES
+  // =========================
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoryService.getCategories();
+
+      console.log("Category response:", response);
+
+      const categoryList = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+      setCategories(categoryList);
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+
+      setCategories([]);
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to load categories"
+      );
+    }
+  };
+
+  // =========================
+  // LOAD SUB CATEGORIES
+  // =========================
+
+  const loadSubCategories = async () => {
+    try {
+      const response =
+        await categoryService.getSubCategories();
+
+      console.log("Sub Category response:", response);
+
+      const subCategoryList = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+      setSubCategories(subCategoryList);
+    } catch (error) {
+      console.error(
+        "Failed to load subcategories:",
+        error
+      );
+
+      setSubCategories([]);
+    }
+  };
+
+  // =========================
+  // LOAD BRANDS
+  // =========================
+
+  const loadBrands = async () => {
+    try {
+      const response =
+        await brandService.getBrands();
+
+      console.log("Brand response:", response);
+
+      const brandList = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+      setBrands(brandList);
+    } catch (error) {
+      console.error(
+        "Failed to load brands:",
+        error
+      );
+
+      setBrands([]);
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to load brands"
+      );
+    }
+  };
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
+
   useEffect(() => {
-    categoryService.getCategories().then(setCategories);
-    brandService.getBrands().then(setBrands);
+    loadCategories();
+    loadSubCategories();
+    loadBrands();
   }, []);
 
+  // =========================
+  // LOAD PRODUCT FOR EDIT
+  // =========================
+
   useEffect(() => {
-    if (mode === 'edit' && id) {
-      productService.getProductById(id).then((p) => p && reset(p));
-    }
+    if (mode !== "edit" || !id) return;
+
+    const loadProduct = async () => {
+      try {
+        const response =
+          await productService.getProductById(id);
+
+        console.log("Single product:", response);
+
+        // Backend যদি { data: product } দেয়
+        const product =
+          response?.data || response;
+
+        if (!product) return;
+
+        reset({
+          title: product.title || "",
+          description: product.description || "",
+          shortDescription:
+            product.shortDescription || "",
+          price: product.price ?? "",
+          stock: product.stock ?? "",
+          discountType:
+            product.discountType || "none",
+          discount: product.discount ?? 0,
+          brand: product.brand || "",
+          category: product.category || "",
+          subCategory:
+            product.subCategory || "",
+          status: product.status || "pending",
+          tag: Array.isArray(product.tag)
+            ? product.tag.join(", ")
+            : product.tag || "",
+        });
+
+        if (
+          Array.isArray(product.images) &&
+          product.images.length > 0
+        ) {
+          setSelectedImages(product.images);
+
+          const mainIndex =
+            product.images.findIndex(
+              (image) => image.isMain === true
+            );
+
+          setMainImageIndex(
+            mainIndex >= 0 ? mainIndex : 0
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load product:",
+          error
+        );
+
+        toast.error("Failed to load product");
+      }
+    };
+
+    loadProduct();
   }, [mode, id, reset]);
 
-  const onSubmit = async (data) => {
-    const payload = {
-      ...data,
-      price: Number(data.price),
-      oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
-      stock: Number(data.stock),
-      images: data.images ? [data.images] : [],
-      slug: data.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-    };
-    if (mode === 'edit') {
-      await productService.updateProduct(id, payload);
-      toast.success('Product updated');
-    } else {
-      await productService.createProduct(payload);
-      toast.success('Product created');
+  // =========================
+  // IMAGE CHANGE
+  // =========================
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+
+    if (files.length === 0) return;
+
+    if (files.length > 5) {
+      toast.error(
+        "You can upload maximum 5 images"
+      );
+
+      e.target.value = "";
+      return;
     }
-    navigate('/admin/products');
+
+    setSelectedImages(files);
+
+    setMainImageIndex(0);
+  };
+
+  // =========================
+  // REMOVE IMAGE
+  // =========================
+
+  const handleRemoveImage = (index) => {
+    setSelectedImages((prevImages) => {
+      const updatedImages =
+        prevImages.filter(
+          (_, imageIndex) =>
+            imageIndex !== index
+        );
+
+      return updatedImages;
+    });
+
+    setMainImageIndex((prevMainIndex) => {
+      if (prevMainIndex === index) {
+        return 0;
+      }
+
+      if (prevMainIndex > index) {
+        return prevMainIndex - 1;
+      }
+
+      return prevMainIndex;
+    });
+  };
+
+  // =========================
+  // GET IMAGE PREVIEW
+  // =========================
+
+  const getImagePreview = (image) => {
+    // New uploaded file
+    if (image instanceof File) {
+      return URL.createObjectURL(image);
+    }
+
+    // Existing backend image
+    if (image?.url) {
+      return `http://localhost:5000/${image.url}`;
+    }
+
+    return "";
+  };
+
+  // =========================
+  // SUBMIT
+  // =========================
+
+  const onSubmit = async (data) => {
+    console.log("SUBMIT CLICKED");
+    console.log("FORM VALUES:", data);
+    try {
+      if (selectedImages.length === 0) {
+        toast.error(
+          "Please select at least one image"
+        );
+
+        return;
+      }
+
+      const formData = new FormData();
+
+      // =========================
+      // BASIC INFO
+      // =========================
+
+      formData.append(
+        "title",
+        data.title
+      );
+
+      formData.append(
+        "description",
+        data.description || ""
+      );
+
+      formData.append(
+        "shortDescription",
+        data.shortDescription || ""
+      );
+
+      // =========================
+      // PRICE & STOCK
+      // =========================
+
+      formData.append(
+        "price",
+        Number(data.price)
+      );
+
+      formData.append(
+        "stock",
+        Number(data.stock)
+      );
+
+      // =========================
+      // DISCOUNT
+      // =========================
+
+      formData.append(
+        "discountType",
+        data.discountType || "none"
+      );
+
+      formData.append(
+        "discount",
+        data.discountType === "none"
+          ? 0
+          : Number(data.discount || 0)
+      );
+
+      // =========================
+      // CATEGORY / BRAND
+      // =========================
+
+      formData.append(
+        "category",
+        data.category || ""
+      );
+
+      formData.append(
+        "subCategory",
+        data.subCategory || ""
+      );
+
+      formData.append(
+        "brand",
+        data.brand || ""
+      );
+
+      // =========================
+      // STATUS
+      // =========================
+
+      formData.append(
+        "status",
+        data.status || "pending"
+      );
+
+      // =========================
+      // MAIN IMAGE INDEX
+      // =========================
+
+      formData.append(
+        "isMain",
+        mainImageIndex
+      );
+
+      // =========================
+      // TAG
+      // =========================
+
+      if (data.tag?.trim()) {
+        formData.append(
+          "tag",
+          data.tag
+        );
+      }
+
+      // =========================
+      // IMAGES
+      // =========================
+
+      selectedImages.forEach(
+        (image) => {
+          if (image instanceof File) {
+            formData.append(
+              "images",
+              image
+            );
+          }
+        }
+      );
+
+      // DEBUG FORM DATA
+
+      for (
+        const [key, value]
+        of formData.entries()
+      ) {
+        console.log(key, value);
+      }
+
+      // =========================
+      // CREATE / UPDATE
+      // =========================
+
+      if (mode === "edit") {
+        await productService.updateProduct(
+          id,
+          formData
+        );
+
+        toast.success(
+          "Product updated successfully"
+        );
+      } else {
+        console.log("SUBMIT CLICKED");
+        console.log("FORM VALUES:", data);
+        await productService.createProduct(
+          formData
+        );
+
+        toast.success(
+          "Product created successfully"
+        );
+      }
+
+      navigate("/admin/products");
+
+    } catch (error) {
+      console.error(
+        "Product submit error:",
+        error
+      );
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to save product"
+      );
+    }
   };
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900">{mode === 'edit' ? 'Edit Product' : 'Create Product'}</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 rounded-lg border border-gray-100 bg-white p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label="Product Name" {...register('name', { required: true })} error={errors.name && 'Required'} />
-          <Input label="SKU" {...register('sku', { required: true })} error={errors.sku && 'Required'} />
+    <div className="max-w-4xl space-y-6">
+
+      {/* HEADER */}
+
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          {mode === "edit"
+            ? "Edit Product"
+            : "Create Product"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Add product information, pricing,
+          stock and images.
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit(onSubmit, (errors) => console.log("FORM VALIDATION ERRORS:", errors))}
+
+        className="space-y-6 rounded-lg border border-gray-100 bg-white p-6"
+      >
+
+        {/* =========================
+            BASIC INFORMATION
+        ========================= */}
+
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Basic Information
+          </h2>
+
+          <div className="space-y-4">
+
+            <Input
+              label="Product Title"
+              {...register("title", {
+                required:
+                  "Product title is required",
+              })}
+              error={errors.title?.message}
+            />
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-gray-900">
+                Short Description
+              </span>
+
+              <textarea
+                rows={3}
+                {...register(
+                  "shortDescription"
+                )}
+                className="w-full rounded border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-gray-900">
+                Description
+              </span>
+
+              <textarea
+                rows={5}
+                {...register("description")}
+                className="w-full rounded border border-gray-200 px-4 py-3 text-sm outline-none focus:border-green-500"
+              />
+            </label>
+
+          </div>
         </div>
-        <label className="block">
-          <span className="mb-2 block text-small text-gray-900">Description</span>
-          <textarea rows={4} {...register('description', { required: true })} className="w-full rounded border border-gray-100 px-4 py-3 text-small focus:border-success" />
-        </label>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select label="Category" {...register('category', { required: true })}>
-            {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-          </Select>
-          <Select label="Brand" {...register('brand', { required: true })}>
-            {brands.map((b) => <option key={b.id} value={b.name}>{b.name}</option>)}
-          </Select>
+
+        {/* =========================
+            CATEGORY / BRAND
+        ========================= */}
+
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Category & Brand
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+
+            <Select
+              label="Category"
+              error={errors.category?.message}
+              {...register("category", {
+                required: "Category is required",
+              })}
+            >
+              <option value="">
+                Select Category
+              </option>
+
+              {categories.map((category) => (
+                <option
+                  key={category._id}
+                  value={category.name}
+                >
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+
+            <Select
+              label="Sub Category"
+              {...register("subCategory")}
+            >
+              <option value="">
+                Select Sub Category
+              </option>
+
+              {subCategories.map(
+                (subCategory) => (
+                  <option
+                    key={
+                      subCategory._id ||
+                      subCategory.id
+                    }
+                    value={subCategory.name}
+                  >
+                    {subCategory.name}
+                  </option>
+                )
+              )}
+            </Select>
+
+            <Select
+              label="Brand"
+              {...register("brand")}
+            >
+              <option value="">
+                Select Brand
+              </option>
+
+              {brands.map((brand) => (
+                <option
+                  key={
+                    brand._id ||
+                    brand.id
+                  }
+                  value={brand.name}
+                >
+                  {brand.name}
+                </option>
+              ))}
+            </Select>
+
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Input label="Price ($)" type="number" step="0.01" {...register('price', { required: true, min: 0 })} error={errors.price && 'Required'} />
-          <Input label="Old Price ($)" type="number" step="0.01" {...register('oldPrice')} />
-          <Input label="Stock" type="number" {...register('stock', { required: true, min: 0 })} error={errors.stock && 'Required'} />
+
+        {/* =========================
+            PRICE & STOCK
+        ========================= */}
+
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Pricing & Stock
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+            <Input
+              label="Price"
+              type="number"
+              min="0"
+              step="0.01"
+              {...register("price", {
+                required:
+                  "Price is required",
+
+                min: {
+                  value: 0,
+                  message:
+                    "Price cannot be negative",
+                },
+              })}
+              error={errors.price?.message}
+            />
+
+            <Input
+              label="Stock"
+              type="number"
+              min="0"
+              step="1"
+              {...register("stock", {
+                required:
+                  "Stock is required",
+
+                min: {
+                  value: 0,
+                  message:
+                    "Stock cannot be negative",
+                },
+              })}
+              error={errors.stock?.message}
+            />
+
+          </div>
         </div>
-        <Input label="Product Image URL" {...register('images')} placeholder="/images/products/example.jpg" />
-        <Input label="Tags (comma separated)" {...register('tags')} />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select label="Status" {...register('status')}>
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
-          </Select>
-          <label className="flex items-center gap-2 self-end pb-3 text-small text-gray-900">
-            <input type="checkbox" {...register('featured')} className="accent-success" /> Featured Product
-          </label>
+
+        {/* =========================
+            DISCOUNT
+        ========================= */}
+
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Discount
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+            <Select
+              label="Discount Type"
+              {...register("discountType")}
+            >
+              <option value="none">
+                No Discount
+              </option>
+
+              <option value="percentage">
+                Percentage (%)
+              </option>
+
+              <option value="flat">
+                Flat Amount
+              </option>
+            </Select>
+
+            <Input
+              label={
+                discountType === "percentage"
+                  ? "Discount (%)"
+                  : "Discount Amount"
+              }
+              type="number"
+              min="0"
+              step="0.01"
+              disabled={
+                discountType === "none"
+              }
+              {...register("discount", {
+                min: {
+                  value: 0,
+                  message:
+                    "Discount cannot be negative",
+                },
+
+                validate: (value) => {
+                  if (
+                    discountType ===
+                    "percentage" &&
+                    Number(value) > 100
+                  ) {
+                    return "Percentage cannot be greater than 100";
+                  }
+
+                  return true;
+                },
+              })}
+              error={
+                errors.discount?.message
+              }
+            />
+
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save Changes' : 'Create Product'}</Button>
-          <Button type="button" variant="border" onClick={() => navigate('/admin/products')}>Cancel</Button>
+
+        {/* =========================
+            PRODUCT IMAGES
+        ========================= */}
+
+        <div className="space-y-4">
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-900">
+              Product Images
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="block w-full rounded-md border border-gray-200 px-4 py-3 text-sm"
+            />
+
+            <p className="mt-2 text-xs text-gray-500">
+              Select minimum 1 and maximum
+              5 images at once.
+            </p>
+          </div>
+
+          {selectedImages.length > 0 && (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+
+              {selectedImages.map(
+                (image, index) => (
+                  <div
+                    key={index}
+                    className={`relative overflow-hidden rounded-lg border p-2 ${mainImageIndex === index
+                      ? "border-green-500"
+                      : "border-gray-200"
+                      }`}
+                  >
+
+                    <img
+                      src={getImagePreview(image)}
+                      alt={`Product ${index + 1
+                        }`}
+                      className="h-28 w-full rounded object-cover"
+                    />
+
+                    <div className="mt-2 flex items-center justify-between gap-2">
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="mainImageIndex"
+                          checked={
+                            mainImageIndex ===
+                            index
+                          }
+                          onChange={() =>
+                            setMainImageIndex(
+                              index
+                            )
+                          }
+                        />
+
+                        <span className="text-xs text-gray-600">
+                          Main
+                        </span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleRemoveImage(
+                            index
+                          )
+                        }
+                        className="text-xs font-medium text-red-500"
+                      >
+                        Remove
+                      </button>
+
+                    </div>
+
+                    {mainImageIndex ===
+                      index && (
+                        <p className="mt-1 text-xs font-medium text-green-600">
+                          Main Image
+                        </p>
+                      )}
+
+                  </div>
+                )
+              )}
+
+            </div>
+          )}
+
         </div>
+
+        {/* =========================
+            TAGS
+        ========================= */}
+
+        <Input
+          label="Tags"
+          {...register("tag")}
+          placeholder="organic, fresh, vegetable"
+        />
+
+        <p className="-mt-4 text-xs text-gray-500">
+          Separate tags using commas.
+        </p>
+
+        {/* =========================
+            STATUS
+        ========================= */}
+
+        <Select
+          label="Status"
+          {...register("status")}
+        >
+          <option value="pending">
+            Pending
+          </option>
+
+          <option value="active">
+            Active
+          </option>
+
+          <option value="inactive">
+            Inactive
+          </option>
+        </Select>
+
+        {/* =========================
+            BUTTONS
+        ========================= */}
+
+        <div className="flex gap-3 pt-4">
+
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? "Saving..."
+              : mode === "edit"
+                ? "Update Product"
+                : "Create Product"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="border"
+            onClick={() =>
+              navigate("/admin/products")
+            }
+          >
+            Cancel
+          </Button>
+
+        </div>
+
       </form>
     </div>
   );
