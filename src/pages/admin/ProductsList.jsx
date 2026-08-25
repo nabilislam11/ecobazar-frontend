@@ -17,9 +17,10 @@ import Loader from '../../components/common/Loader';
 
 export default function ProductsList() {
   const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState();
+  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [toDelete, setToDelete] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // =========================
   // LOAD PRODUCTS
@@ -63,8 +64,11 @@ export default function ProductsList() {
 
   useEffect(() => {
     load();
-    loadCategories();
   }, [search]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   // =========================
   // DELETE PRODUCT
