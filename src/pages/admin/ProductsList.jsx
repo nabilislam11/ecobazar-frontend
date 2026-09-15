@@ -151,107 +151,110 @@ export default function ProductsList() {
         ]}
       >
 
-        {products.map((p) => (
+        {products.map((p) => {
+          const mainImage = p.images?.find(
+            (image) => image.isMain === true
+          );
+          return (
+            <tr key={p._id}>
 
-          <tr key={p._id}>
+              {/* PRODUCT */}
+              <td className="flex items-center gap-3 px-4 py-3">
 
-            {/* PRODUCT */}
-            <td className="flex items-center gap-3 px-4 py-3">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-gray-50">
 
-              <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-gray-50">
+                  {mainImage ? (
+                    <img
+                      src={`http://localhost:5000/${mainImage.url}`}
+                      alt={p.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
 
-                {p.images?.length > 0 ? (
-                  <img
-                    src={`http://localhost:5000/${p.images[0]?.url}`}
-                    alt={p.title}
-                    className="h-full w-full object-cover"
-                  />
-                ) : null}
+                </div>
 
-              </div>
+                <span className="text-gray-900">
+                  {p.title}
+                </span>
 
-              <span className="text-gray-900">
-                {p.title}
-              </span>
+              </td>
 
-            </td>
+              {/* CATEGORY */}
+              <td className="px-4 py-3 text-gray-700">
+                {p.category || 'N/A'}
+              </td>
 
-            {/* CATEGORY */}
-            <td className="px-4 py-3 text-gray-700">
-              {p.category || 'N/A'}
-            </td>
+              {/* PRICE */}
+              <td className="px-4 py-3 text-gray-700">
+                ${Number(p.price || 0).toFixed(2)}
+              </td>
 
-            {/* PRICE */}
-            <td className="px-4 py-3 text-gray-700">
-              ${Number(p.price || 0).toFixed(2)}
-            </td>
+              {/* STOCK */}
+              <td className="px-4 py-3 text-gray-700">
+                {p.stock ?? 0}
+              </td>
 
-            {/* STOCK */}
-            <td className="px-4 py-3 text-gray-700">
-              {p.stock ?? 0}
-            </td>
+              {/* STATUS */}
+              <td className="px-4 py-3">
 
-            {/* STATUS */}
-            <td className="px-4 py-3">
-
-              <Badge
-                tone={
-                  p.status === 'active'
-                    ? 'success'
-                    : 'gray'
-                }
-              >
-                {p.status}
-              </Badge>
-
-            </td>
-
-            {/* CREATED DATE */}
-            <td className="px-4 py-3 text-gray-400">
-
-              {p.createdAt
-                ? new Date(
-                  p.createdAt
-                ).toLocaleDateString()
-                : 'N/A'}
-
-            </td>
-
-            {/* ACTIONS */}
-            <td className="px-4 py-3">
-
-              <div className="flex items-center gap-3 text-gray-400">
-
-                <Link
-                  to={`/product/${p._id}`}
-                  target="_blank"
-                  aria-label="View"
+                <Badge
+                  tone={
+                    p.status === 'active'
+                      ? 'success'
+                      : 'gray'
+                  }
                 >
-                  <Eye size={16} />
-                </Link>
+                  {p.status}
+                </Badge>
 
-                <Link
-                  to={`/admin/products/${p._id}/edit`}
-                  aria-label="Edit"
-                >
-                  <Pencil size={16} />
-                </Link>
+              </td>
 
-                <button
-                  onClick={() => setToDelete(p)}
-                  aria-label="Delete"
-                  className="hover:text-error"
-                >
-                  <Trash2 size={16} />
-                </button>
+              {/* CREATED DATE */}
+              <td className="px-4 py-3 text-gray-400">
 
-              </div>
+                {p.createdAt
+                  ? new Date(
+                    p.createdAt
+                  ).toLocaleDateString()
+                  : 'N/A'}
 
-            </td>
+              </td>
 
-          </tr>
+              {/* ACTIONS */}
+              <td className="px-4 py-3">
 
-        ))}
+                <div className="flex items-center gap-3 text-gray-400">
+
+                  <Link
+                    to={`/product/${p._id}`}
+                    target="_blank"
+                    aria-label="View"
+                  >
+                    <Eye size={16} />
+                  </Link>
+
+                  <Link
+                    to={`/admin/products/${p._id}/edit`}
+                    aria-label="Edit"
+                  >
+                    <Pencil size={16} />
+                  </Link>
+
+                  <button
+                    onClick={() => setToDelete(p)}
+                    aria-label="Delete"
+                    className="hover:text-error"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+          )
+        })}
 
       </AdminTable>
 

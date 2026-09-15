@@ -24,7 +24,7 @@ export default function Home() {
 
   useEffect(() => {
     Promise.all([
-      productService.getFeaturedProducts(),
+      productService.createProduct(),
       productService.getProducts({ pageSize: 10, sort: 'rating' }),
       categoryService.getCategories(),
       blogService.getBlogs(),
