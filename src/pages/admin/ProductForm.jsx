@@ -406,17 +406,25 @@ export default function ProductForm({ mode }) {
       // =========================
       // IMAGES
       // =========================
+      // Existing + New image information
+      const imageData = selectedImages.map((image, index) => ({
+        type: image instanceof File ? "new" : "existing",
+        index,
+        _id: image instanceof File ? null : image._id,
+        url: image instanceof File ? null : image.url,
+      }));
 
-      selectedImages.forEach(
-        (image) => {
-          if (image instanceof File) {
-            formData.append(
-              "images",
-              image
-            );
-          }
-        }
+      formData.append(
+        "imageData",
+        JSON.stringify(imageData)
       );
+
+      // New uploaded images
+      selectedImages.forEach((image) => {
+        if (image instanceof File) {
+          formData.append("images", image);
+        }
+      });
 
       // DEBUG FORM DATA
 
