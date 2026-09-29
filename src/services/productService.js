@@ -19,3 +19,8 @@ export const updateProduct = async (id, data) => {
   );
   return response.data;
 };
+// Product details / slug based fetch
+export const getProductBySlug = async (slug) => {
+  const response = await api.get(`/auth/getsingleproduct/${slug}`);
+  return response.data.data;
+};

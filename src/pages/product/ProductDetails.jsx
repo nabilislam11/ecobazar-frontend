@@ -28,8 +28,17 @@ export default function ProductDetails() {
     productService.getProductBySlug(slug).then((p) => {
       setProduct(p);
       if (p) {
-        productService.getRelatedProducts(p).then(setRelated);
-        reviewService.getReviews(p.id).then(setReviews);
+        productService
+          .getRelatedProducts(p)
+          .then((res) => {
+            setRelated(Array.isArray(res) ? res : []);
+          });
+
+        reviewService
+          .getReviews(p._id)
+          .then((res) => {
+            setReviews(Array.isArray(res) ? res : []);
+          });
       }
     });
   }, [slug]);
@@ -38,7 +47,7 @@ export default function ProductDetails() {
 
   return (
     <div>
-      <Breadcrumb items={[{ label: 'Shop', to: '/shop' }, { label: product.name }]} />
+      <Breadcrumb items={[{ label: 'Shop', to: '/shop' }, { label: product.title }]} />
       <div className="container-page grid grid-cols-1 gap-10 py-10 lg:grid-cols-2">
         <ProductGallery images={product.images} name={product.name} />
         <div>
@@ -69,9 +78,9 @@ export default function ProductDetails() {
             <button
               onClick={() => toggleItem(product)}
               aria-label="Wishlist"
-              className={`flex h-12 w-12 items-center justify-center rounded-full border ${isWishlisted(product.id) ? 'border-error text-error' : 'border-gray-100 text-gray-700'}`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full border ${isWishlisted(product._id) ? 'border-error text-error' : 'border-gray-100 text-gray-700'}`}
             >
-              <Heart size={18} fill={isWishlisted(product.id) ? 'currentColor' : 'none'} />
+              <Heart size={18} fill={isWishlisted(product._id) ? 'currentColor' : 'none'} />
             </button>
           </div>
           <Button as={Link} to="/checkout" variant="border" size="lg" className="w-full" onClick={() => addItem(product, qty)}>
@@ -108,7 +117,7 @@ export default function ProductDetails() {
         )}
         {tab === 'reviews' && (
           <div className="max-w-2xl">
-            {reviews.length ? reviews.map((r) => <ReviewCard key={r.id} review={r} />) : <p className="text-small text-gray-400">No reviews yet.</p>}
+            {reviews.length ? reviews.map((r) => <ReviewCard key={r._id} review={r} />) : <p className="text-small text-gray-400">No reviews yet.</p>}
           </div>
         )}
       </div>

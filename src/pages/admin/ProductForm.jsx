@@ -44,8 +44,11 @@ export default function ProductForm({ mode }) {
       brand: "",
       category: "",
       subCategory: "",
+      showProduct: "",
       status: "pending",
       tag: "",
+      discountStartDate: "",
+      discountEndDate: "",
     },
   });
 
@@ -58,15 +61,14 @@ export default function ProductForm({ mode }) {
   const loadCategories = async () => {
     try {
       const response = await categoryService.getCategories();
-
-      console.log("Category response:", response);
-
       const categoryList = Array.isArray(response)
         ? response
         : Array.isArray(response?.data)
           ? response.data
           : [];
 
+      console.log("CATEGORY RESPONSE:", response);
+      console.log("CATEGORY LIST:", categoryList);
       setCategories(categoryList);
     } catch (error) {
       console.error("Failed to load categories:", error);
@@ -88,8 +90,6 @@ export default function ProductForm({ mode }) {
     try {
       const response =
         await categoryService.getSubCategories();
-
-      console.log("Sub Category response:", response);
 
       const subCategoryList = Array.isArray(response)
         ? response
@@ -116,9 +116,6 @@ export default function ProductForm({ mode }) {
     try {
       const response =
         await brandService.getBrands();
-
-      console.log("Brand response:", response);
-
       const brandList = Array.isArray(response)
         ? response
         : Array.isArray(response?.data)
@@ -163,8 +160,6 @@ export default function ProductForm({ mode }) {
         const response =
           await productService.getProductById(id);
 
-        console.log("Single product:", response);
-
         // Backend যদি { data: product } দেয়
         const product =
           response?.data || response;
@@ -181,11 +176,19 @@ export default function ProductForm({ mode }) {
           discountType:
             product.discountType || "none",
           discount: product.discount ?? 0,
+          discountStartDate: product.discountStartDate
+            ? product.discountStartDate.slice(0, 10)
+            : "",
+
+          discountEndDate: product.discountEndDate
+            ? product.discountEndDate.slice(0, 10)
+            : "",
           brand: product.brand || "",
           category: product.category || "",
           subCategory:
             product.subCategory || "",
           status: product.status || "pending",
+          showProduct: product.showProduct,
           tag: Array.isArray(product.tag)
             ? product.tag.join(", ")
             : product.tag || "",
@@ -293,8 +296,7 @@ export default function ProductForm({ mode }) {
   // =========================
 
   const onSubmit = async (data) => {
-    console.log("SUBMIT CLICKED");
-    console.log("FORM VALUES:", data);
+
     try {
       if (selectedImages.length === 0) {
         toast.error(
@@ -354,7 +356,15 @@ export default function ProductForm({ mode }) {
           ? 0
           : Number(data.discount || 0)
       );
+      formData.append(
+        "discountStartDate",
+        data.discountStartDate || ""
+      );
 
+      formData.append(
+        "discountEndDate",
+        data.discountEndDate || ""
+      );
       // =========================
       // CATEGORY / BRAND
       // =========================
@@ -382,7 +392,13 @@ export default function ProductForm({ mode }) {
         "status",
         data.status || "pending"
       );
-
+      //==============
+      //showproduct
+      //============
+      formData.append(
+        "showProduct",
+        data.showProduct || ""
+      );
       // =========================
       // MAIN IMAGE INDEX
       // =========================
@@ -432,7 +448,7 @@ export default function ProductForm({ mode }) {
         const [key, value]
         of formData.entries()
       ) {
-        console.log(key, value);
+
       }
 
       // =========================
@@ -449,8 +465,6 @@ export default function ProductForm({ mode }) {
           "Product updated successfully"
         );
       } else {
-        console.log("SUBMIT CLICKED");
-        console.log("FORM VALUES:", data);
         await productService.createProduct(
           formData
         );
@@ -572,8 +586,8 @@ export default function ProductForm({ mode }) {
 
               {categories.map((category) => (
                 <option
+                  value={category._id}
                   key={category._id}
-                  value={category.name}
                 >
                   {category.name}
                 </option>
@@ -591,11 +605,10 @@ export default function ProductForm({ mode }) {
               {subCategories.map(
                 (subCategory) => (
                   <option
+                    value={subCategory._id}
                     key={
-                      subCategory._id ||
-                      subCategory.id
+                      subCategory._id
                     }
-                    value={subCategory.name}
                   >
                     {subCategory.name}
                   </option>
@@ -678,14 +691,15 @@ export default function ProductForm({ mode }) {
         </div>
 
         {/* =========================
-            DISCOUNT
-        ========================= */}
+    DISCOUNT
+========================= */}
 
         <div>
           <h2 className="mb-4 text-lg font-semibold text-gray-900">
             Discount
           </h2>
 
+          {/* Discount Type + Amount */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
             <Select
@@ -714,20 +728,16 @@ export default function ProductForm({ mode }) {
               type="number"
               min="0"
               step="0.01"
-              disabled={
-                discountType === "none"
-              }
+              disabled={discountType === "none"}
               {...register("discount", {
                 min: {
                   value: 0,
-                  message:
-                    "Discount cannot be negative",
+                  message: "Discount cannot be negative",
                 },
 
                 validate: (value) => {
                   if (
-                    discountType ===
-                    "percentage" &&
+                    discountType === "percentage" &&
                     Number(value) > 100
                   ) {
                     return "Percentage cannot be greater than 100";
@@ -736,13 +746,103 @@ export default function ProductForm({ mode }) {
                   return true;
                 },
               })}
-              error={
-                errors.discount?.message
-              }
+              error={errors.discount?.message}
             />
 
           </div>
+
+          {/* =========================
+      DISCOUNT PERIOD
+  ========================= */}
+
+          {discountType !== "none" && (
+            <div className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4">
+
+              {/* Header */}
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Discount Period
+                </h3>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Set the date range when this discount will be active.
+                </p>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                {/* Start Date */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Start Date
+                  </label>
+
+                  <input
+                    type="date"
+                    {...register("discountStartDate", {
+                      required:
+                        discountType !== "none"
+                          ? "Start date is required"
+                          : false,
+                    })}
+                    className="w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                  />
+
+                  {errors.discountStartDate && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.discountStartDate.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    End Date
+                  </label>
+
+                  <input
+                    type="date"
+                    {...register("discountEndDate", {
+                      required:
+                        discountType !== "none"
+                          ? "End date is required"
+                          : false,
+
+                      validate: (value) => {
+                        const startDate = watch(
+                          "discountStartDate"
+                        );
+
+                        if (
+                          startDate &&
+                          value &&
+                          value < startDate
+                        ) {
+                          return "End date cannot be before start date";
+                        }
+
+                        return true;
+                      },
+                    })}
+                    className="w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                  />
+
+                  {errors.discountEndDate && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.discountEndDate.message}
+                    </p>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
         </div>
+
 
         {/* =========================
             PRODUCT IMAGES
@@ -858,23 +958,51 @@ export default function ProductForm({ mode }) {
         {/* =========================
             STATUS
         ========================= */}
+        <div>
 
-        <Select
-          label="Status"
-          {...register("status")}
-        >
-          <option value="pending">
-            Pending
-          </option>
 
-          <option value="active">
-            Active
-          </option>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
-          <option value="inactive">
-            Inactive
-          </option>
-        </Select>
+            <Select
+              label="Status"
+              {...register("status")}
+            >
+              <option value="pending">
+                Pending
+              </option>
+
+              <option value="active">
+                Active
+              </option>
+
+              <option value="inactive">
+                Inactive
+              </option>
+            </Select>
+            <Select
+              label="showProduct"
+              {...register("showProduct")}
+            >
+              <option value="todaysDeal">
+                Todays Deal
+              </option>
+
+              <option value="fuaturedProducts">
+                Fuatured Products
+              </option>
+
+              <option value="newArrivals">
+                New Arrivals
+              </option>
+              <option value="none">
+                None
+              </option>
+            </Select>
+
+
+          </div>
+        </div>
+
 
         {/* =========================
             BUTTONS

@@ -26,7 +26,6 @@ export default function Shop() {
     categoryService.getCategories().then(setCategories);
     brandService.getBrands().then(setBrands);
   }, []);
-
   useEffect(() => {
     if (!categorySlug) return;
     categoryService.getCategoryBySlug(categorySlug).then((c) => c && setCategory(c.name));
@@ -38,10 +37,32 @@ export default function Shop() {
     productService
       .getProducts({ category: category || undefined, maxPrice, minRating: minRating || undefined, sort, page, pageSize: 12, search })
       .then((res) => {
-        setProducts(res.items);
-        setTotalPages(res.totalPages);
+
+        const productList = Array.isArray(res?.items)
+          ? res.items
+          : Array.isArray(res?.data?.items)
+            ? res.data.items
+            : Array.isArray(res?.data)
+              ? res.data
+              : [];
+
+        setProducts(productList);
+
+        setTotalPages(
+          res?.totalPages ||
+          res?.data?.totalPages ||
+          1
+        );
+
         setLoading(false);
-      });
+      })
+      .catch((error) => {
+        console.error("Shop products error", error);
+        setProducts([]);
+        setTotalPages(1);
+        setLoading(false)
+
+      })
   }, [category, maxPrice, minRating, sort, page, searchParams]);
 
   return (

@@ -1,20 +1,14 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Search, Heart, ShoppingBag, ChevronDown, PhoneCall, MapPin, Menu, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-
-const navLinks = [
-  { label: 'Home', to: '/' },
-  { label: 'Shop', to: '/shop' },
-  { label: 'Pages', to: '/about' },
-  { label: 'Blog', to: '/blog' },
-  { label: 'About Us', to: '/about' },
-  { label: 'Contact Us', to: '/contact' },
-];
+import { getCategories, getProductsByCategory } from '../../services/categoryService';
 
 export default function Header() {
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [query, setQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
@@ -26,6 +20,34 @@ export default function Header() {
     e.preventDefault();
     navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
   };
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await getCategories()
+        const categoryList = Array.isArray(response) ? response : response?.data || [];
+        setCategories(categoryList)
+
+      } catch (error) {
+        console.error(error);
+
+      }
+    }
+    loadCategories()
+  }, [])
+  const { id } = useParams()
+  useEffect(() => {
+    const loadProductsByCategory = async () => {
+      try {
+        const response = await getProductsByCategory(id)
+        setProducts(response)
+      } catch (error) {
+        console.log(error);
+
+
+      }
+    }
+    loadProductsByCategory()
+  }, [id])
 
   return (
     <header className="w-full bg-white">
@@ -105,16 +127,18 @@ export default function Header() {
       {/* Nav links bar */}
       <nav className="hidden bg-[#333333] lg:block">
         <div className="container-page flex items-center justify-between py-4">
-          <div className="flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="text-small font-medium text-gray-200 hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div className="min-w-0 flex-1  overflow-hidden">
+            <div className="flex items-center gap-7 overflow-x-auto whitespace-nowrap scrollbar-hide">
+              {categories.filter((category) => category.status === "active").map((category) => (
+                <Link
+                  key={category._id}
+                  to={`/category/${category._id}`}
+                  className="shrink-0 text-small font-medium text-gray-200 transition-colors duration-200 hover:text-white"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-2 text-small font-medium text-white">
             <PhoneCall size={20} />
@@ -125,26 +149,69 @@ export default function Header() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-gray-100 bg-white lg:hidden">
-          <div className="flex flex-col gap-1 px-4 py-4">
-            {navLinks.map((link) => (
+        <div className="border-t border-gray-100 bg-white shadow-lg lg:hidden">
+          <div className="px-4 py-5">
+
+            {/* Category title */}
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Categories
+              </h3>
+
+              <span className="text-xs text-gray-400">
+                {categories.filter(
+                  (category) => category.status === "active"
+                ).length}{" "}
+                categories
+              </span>
+            </div>
+
+            {/* Categories */}
+            <div className="grid grid-cols-2 gap-2">
+              {categories
+                .filter((category) => category.status === "active")
+                .map((category) => (
+                  <Link
+                    key={category._id}
+                    to={`/category/${category._id}`}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex min-h-[44px] items-center rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-gray-200 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <span className="truncate">
+                      {category.name}
+                    </span>
+                  </Link>
+                ))}
+            </div>
+
+            {/* Other links */}
+            <div className="mt-4 border-t border-gray-100 pt-3">
+
               <Link
-                key={link.label}
-                to={link.to}
+                to="/wishlist"
                 onClick={() => setMobileOpen(false)}
-                className="rounded px-3 py-2 text-small text-gray-700 hover:bg-gray-50"
+                className="flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                {link.label}
+                <span>Wishlist</span>
+
+                {wishlistCount > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-success-dark px-1.5 text-[10px] text-white">
+                    {wishlistCount}
+                  </span>
+                )}
               </Link>
-            ))}
-            <Link to="/wishlist" onClick={() => setMobileOpen(false)} className="rounded px-3 py-2 text-small text-gray-700 hover:bg-gray-50">
-              Wishlist ({wishlistCount})
-            </Link>
-            {!isAuthenticated && (
-              <Link to="/login" onClick={() => setMobileOpen(false)} className="rounded px-3 py-2 text-small text-gray-700 hover:bg-gray-50">
-                Sign In / Sign Up
-              </Link>
-            )}
+
+              {!isAuthenticated && (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-lg px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Sign In / Sign Up
+                </Link>
+              )}
+
+            </div>
           </div>
         </div>
       )}
