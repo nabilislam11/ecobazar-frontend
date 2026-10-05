@@ -12,11 +12,7 @@ export const getProductById = async (id) => {
   return response.data;
 };
 export const updateProduct = async (id, data) => {
-  const response = await api.post(
-    `/auth/updateproduct/${id}
-  `,
-    data,
-  );
+  const response = await api.post(`/auth/updateproduct/${id}`, data);
   return response.data;
 };
 // Product details / slug based fetch

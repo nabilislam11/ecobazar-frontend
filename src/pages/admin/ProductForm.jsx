@@ -86,27 +86,27 @@ export default function ProductForm({ mode }) {
   // LOAD SUB CATEGORIES
   // =========================
 
-  const loadSubCategories = async () => {
-    try {
-      const response =
-        await categoryService.getSubCategories();
+  // const loadSubCategories = async () => {
+  //   try {
+  //     const response =
+  //       await categoryService.getSubCategories();
 
-      const subCategoryList = Array.isArray(response)
-        ? response
-        : Array.isArray(response?.data)
-          ? response.data
-          : [];
+  //     const subCategoryList = Array.isArray(response)
+  //       ? response
+  //       : Array.isArray(response?.data)
+  //         ? response.data
+  //         : [];
 
-      setSubCategories(subCategoryList);
-    } catch (error) {
-      console.error(
-        "Failed to load subcategories:",
-        error
-      );
+  //     setSubCategories(subCategoryList);
+  //   } catch (error) {
+  //     console.error(
+  //       "Failed to load subcategories:",
+  //       error
+  //     );
 
-      setSubCategories([]);
-    }
-  };
+  //     setSubCategories([]);
+  //   }
+  // };
 
   // =========================
   // LOAD BRANDS
@@ -144,7 +144,7 @@ export default function ProductForm({ mode }) {
 
   useEffect(() => {
     loadCategories();
-    loadSubCategories();
+    // loadSubCategories();
     loadBrands();
   }, []);
 
@@ -155,27 +155,94 @@ export default function ProductForm({ mode }) {
   useEffect(() => {
     if (mode !== "edit" || !id) return;
 
+    // const loadProduct = async () => {
+    //   try {
+    //     const response =
+    //       await productService.getProductById(id);
+
+    //     // Backend যদি { data: product } দেয়
+    //     const product =
+    //       response?.data || response;
+
+    //     if (!product) return;
+
+    //     reset({
+    //       title: product.title || "",
+    //       description: product.description || "",
+    //       shortDescription:
+    //         product.shortDescription || "",
+    //       price: product.price ?? "",
+    //       stock: product.stock ?? "",
+    //       discountType:
+    //         product.discountType || "none",
+    //       discount: product.discount ?? 0,
+    //       discountStartDate: product.discountStartDate
+    //         ? product.discountStartDate.slice(0, 10)
+    //         : "",
+
+    //       discountEndDate: product.discountEndDate
+    //         ? product.discountEndDate.slice(0, 10)
+    //         : "",
+    //       brand: product.brand || "",
+    //       category: product.category || "",
+    //       subCategory:
+    //         product.subCategory || "",
+    //       status: product.status || "pending",
+    //       showProduct: product.showProduct,
+    //       tag: Array.isArray(product.tag)
+    //         ? product.tag.join(", ")
+    //         : product.tag || "",
+    //     });
+
+    //     if (
+    //       Array.isArray(product.images) &&
+    //       product.images.length > 0
+    //     ) {
+    //       setSelectedImages(product.images);
+
+    //       const mainIndex =
+    //         product.images.findIndex(
+    //           (image) => image.isMain === true
+    //         );
+
+    //       setMainImageIndex(
+    //         mainIndex >= 0 ? mainIndex : 0
+    //       );
+    //     }
+    //   } catch (error) {
+    //     console.error(
+    //       "Failed to load product:",
+    //       error
+    //     );
+
+    //     toast.error("Failed to load product");
+    //   }
+    // };
     const loadProduct = async () => {
       try {
         const response =
           await productService.getProductById(id);
 
-        // Backend যদি { data: product } দেয়
+        console.log("EDIT RAW RESPONSE:", response);
+
         const product =
-          response?.data || response;
+          response?.data?.data ||
+          response?.data ||
+          response;
+
+        console.log("EDIT PRODUCT:", product);
 
         if (!product) return;
 
         reset({
           title: product.title || "",
           description: product.description || "",
-          shortDescription:
-            product.shortDescription || "",
+          shortDescription: product.shortDescription || "",
           price: product.price ?? "",
           stock: product.stock ?? "",
-          discountType:
-            product.discountType || "none",
+          discountType: product.discountType || "none",
           discount: product.discount ?? 0,
+
           discountStartDate: product.discountStartDate
             ? product.discountStartDate.slice(0, 10)
             : "",
@@ -183,12 +250,13 @@ export default function ProductForm({ mode }) {
           discountEndDate: product.discountEndDate
             ? product.discountEndDate.slice(0, 10)
             : "",
+
           brand: product.brand || "",
           category: product.category || "",
-          subCategory:
-            product.subCategory || "",
+          subCategory: product.subCategory || "",
           status: product.status || "pending",
           showProduct: product.showProduct,
+
           tag: Array.isArray(product.tag)
             ? product.tag.join(", ")
             : product.tag || "",
@@ -209,6 +277,7 @@ export default function ProductForm({ mode }) {
             mainIndex >= 0 ? mainIndex : 0
           );
         }
+
       } catch (error) {
         console.error(
           "Failed to load product:",
@@ -218,7 +287,6 @@ export default function ProductForm({ mode }) {
         toast.error("Failed to load product");
       }
     };
-
     loadProduct();
   }, [mode, id, reset]);
 
