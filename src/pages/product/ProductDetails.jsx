@@ -5,9 +5,10 @@ import * as productService from '../../services/productService';
 import * as reviewService from '../../services/reviewService';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import Rating from '../../components/ecommerce/Rating';
-import ProductGallery from '../../components/ecommerce/ProductGallery';
+
 import ProductGrid from '../../components/ecommerce/ProductGrid';
 import ReviewCard from '../../components/ecommerce/ReviewCard';
+import ProductGallery from '../../components/ecommerce/ProductGallery';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import { useCart } from '../../context/CartContext';
@@ -28,12 +29,8 @@ export default function ProductDetails() {
     productService.getProductBySlug(slug).then((p) => {
       setProduct(p);
       if (p) {
-        productService
-          .getRelatedProducts(p)
-          .then((res) => {
-            setRelated(Array.isArray(res) ? res : []);
-          });
 
+        setRelated([]);
         reviewService
           .getReviews(p._id)
           .then((res) => {
@@ -49,16 +46,25 @@ export default function ProductDetails() {
     <div>
       <Breadcrumb items={[{ label: 'Shop', to: '/shop' }, { label: product.title }]} />
       <div className="container-page grid grid-cols-1 gap-10 py-10 lg:grid-cols-2">
-        <ProductGallery images={product.images} name={product.name} />
         <div>
-          <h1 className="mb-2 text-2xl font-semibold text-gray-900">{product.name}</h1>
+          <ProductGallery
+            images={product.images}
+            name={product.title}
+          />
+        </div>
+        <div>
+          <h1 className="mb-2 text-2xl font-semibold text-gray-900">{product.title}</h1>
           <div className="mb-4 flex items-center gap-3">
             <Rating value={product.rating} count={product.reviewCount} />
             <span className="text-tiny text-gray-400">SKU: {product.sku}</span>
           </div>
           <div className="mb-4 flex items-center gap-3">
             <span className="text-2xl font-semibold text-gray-900">${product.price.toFixed(2)}</span>
-            {product.oldPrice && <span className="text-medium text-gray-400 line-through">${product.oldPrice.toFixed(2)}</span>}
+            {product.oldPrice && (
+              <span className="text-medium text-gray-400 line-through">
+                ${Number(product.oldPrice).toFixed(2)}
+              </span>
+            )}
             {product.discount > 0 && <span className="rounded bg-error/10 px-2 py-1 text-tiny font-medium text-error">-{product.discount}%</span>}
           </div>
           <p className="mb-6 text-small text-gray-700">{product.description}</p>

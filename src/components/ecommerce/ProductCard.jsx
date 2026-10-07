@@ -10,34 +10,68 @@ import { useWishlist } from '../../context/WishlistContext';
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
-  const wishlisted = isWishlisted(product.id);
+
+  const wishlisted = isWishlisted(product._id);
+
+  // =========================
+  // GET MAIN IMAGE
+  // =========================
+
+  const mainImage =
+    product.images?.find(
+      (image) => image.isMain === true
+    ) || product.images?.[0];
+
+  const imageUrl = mainImage?.url
+    ? mainImage.url.startsWith("http")
+      ? mainImage.url
+      : `http://localhost:5000/${mainImage.url.replace(/\\/g, "/")}`
+    : "";
+
+  console.log("PRODUCT:", product);
+  console.log("MAIN IMAGE:", mainImage);
+  console.log("IMAGE URL:", imageUrl);
 
   return (
     <div className="group relative w-full border border-gray-100 bg-white transition-shadow hover:border-success hover:shadow-hover">
-      <Link to={`/product/${product.slug}`} className="block">
+
+      <Link
+        to={`/product/${product.slug}`}
+        className="block"
+      >
         <div className="relative aspect-square overflow-hidden bg-gray-50 p-3">
+
           {product.discount > 0 && (
             <span className="absolute left-3 top-3 z-10 rounded bg-error px-2 py-1 text-tiny text-white">
               Sale {product.discount}%
             </span>
           )}
+
           <img
-            src={product.images?.[0]}
-            alt={product.name}
+            src={imageUrl}
+            alt={product.title}
             className="h-full w-full object-cover"
             onError={(e) => {
-              e.currentTarget.style.display = 'none';
+              console.log(
+                "IMAGE FAILED:",
+                e.currentTarget.src
+              );
             }}
           />
+
         </div>
+
         <div className="flex flex-col gap-1.5 p-3">
-          <p className="truncate text-small text-gray-700 group-hover:text-success">{product.name}</p>
+          <p className="truncate text-small text-gray-700 group-hover:text-success">
+            {product.title}
+          </p>
+
           <div className="flex items-baseline gap-2">
-            <span className="text-medium font-medium text-gray-900">${product.price.toFixed(2)}</span>
-            {product.oldPrice && (
-              <span className="text-small text-gray-400 line-through">${product.oldPrice.toFixed(2)}</span>
-            )}
+            <span className="text-medium font-medium text-gray-900">
+              ${Number(product.price).toFixed(2)}
+            </span>
           </div>
+
           <Rating value={product.rating} />
         </div>
       </Link>
@@ -46,13 +80,24 @@ export default function ProductCard({ product }) {
         <button
           aria-label="Add to wishlist"
           onClick={() => toggleItem(product)}
-          className={`flex h-10 w-10 items-center justify-center rounded-full bg-white shadow ${wishlisted ? 'text-error' : 'text-gray-700'}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-full bg-white shadow ${wishlisted ? "text-error" : "text-gray-700"
+            }`}
         >
-          <Heart size={18} fill={wishlisted ? 'currentColor' : 'none'} />
+          <Heart
+            size={18}
+            fill={
+              wishlisted
+                ? "currentColor"
+                : "none"
+            }
+          />
         </button>
+
         <button
           aria-label="Quick view"
-          onClick={() => toast('Quick view coming soon')}
+          onClick={() =>
+            toast("Quick view coming soon")
+          }
           className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 shadow"
         >
           <Eye size={18} />
