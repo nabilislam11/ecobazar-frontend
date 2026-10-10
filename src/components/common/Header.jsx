@@ -128,7 +128,8 @@ export default function Header() {
       <nav className="hidden bg-[#333333] lg:block">
         <div className="container-page flex items-center justify-between py-4">
           <div className="min-w-0 flex-1  overflow-hidden">
-            <div className="flex items-center gap-7 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <div className="flex
+             flex-wrap items-center gap-7 whitespace-nowrap scrollbar-hide">
               {categories.filter((category) => category.status === "active").map((category) => (
                 <Link
                   key={category._id}

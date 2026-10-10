@@ -28,10 +28,6 @@ export default function ProductCard({ product }) {
       : `http://localhost:5000/${mainImage.url.replace(/\\/g, "/")}`
     : "";
 
-  console.log("PRODUCT:", product);
-  console.log("MAIN IMAGE:", mainImage);
-  console.log("IMAGE URL:", imageUrl);
-
   return (
     <div className="group relative w-full border border-gray-100 bg-white transition-shadow hover:border-success hover:shadow-hover">
 

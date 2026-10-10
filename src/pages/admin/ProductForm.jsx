@@ -44,7 +44,7 @@ export default function ProductForm({ mode }) {
       brand: "",
       category: "",
       subCategory: "",
-      showProduct: "",
+      section: "",
       status: "pending",
       tag: "",
       discountStartDate: "",
@@ -188,7 +188,7 @@ export default function ProductForm({ mode }) {
     //       subCategory:
     //         product.subCategory || "",
     //       status: product.status || "pending",
-    //       showProduct: product.showProduct,
+    //       section: product.section,
     //       tag: Array.isArray(product.tag)
     //         ? product.tag.join(", ")
     //         : product.tag || "",
@@ -255,7 +255,7 @@ export default function ProductForm({ mode }) {
           category: product.category || "",
           subCategory: product.subCategory || "",
           status: product.status || "pending",
-          showProduct: product.showProduct,
+          section: product.section || "none",
 
           tag: Array.isArray(product.tag)
             ? product.tag.join(", ")
@@ -461,11 +461,11 @@ export default function ProductForm({ mode }) {
         data.status || "pending"
       );
       //==============
-      //showproduct
+      //section
       //============
       formData.append(
-        "showProduct",
-        data.showProduct || ""
+        "section",
+        data.section || "none"
       );
       // =========================
       // MAIN IMAGE INDEX
@@ -1048,19 +1048,22 @@ export default function ProductForm({ mode }) {
               </option>
             </Select>
             <Select
-              label="showProduct"
-              {...register("showProduct")}
+              label="section"
+              {...register("section")}
             >
               <option value="todaysDeal">
                 Todays Deal
               </option>
 
-              <option value="fuaturedProducts">
+              <option value="featuredProducts">
                 Fuatured Products
               </option>
 
-              <option value="newArrivals">
-                New Arrivals
+              <option value="populerDeals">
+                Populer Deals
+              </option>
+              <option value="slider">
+                Slider
               </option>
               <option value="none">
                 None
