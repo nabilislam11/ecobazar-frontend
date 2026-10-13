@@ -45,22 +45,22 @@ export default function Home() {
   const activeProduct = sliderProducts[activeSlide];
   useEffect(() => {
     Promise.all([
-      productService.getProductsSection({
+      productService.getProductsByParams({
         pageSize: 5,
         section: "slider",
       }),
 
-      productService.getProductsSection({
+      productService.getProductsByParams({
         pageSize: 10,
         section: "populerDeals",
       }),
 
-      productService.getProductsSection({
+      productService.getProductsByParams({
         pageSize: 10,
         section: "todaysDeal",
       }),
 
-      productService.getProductsSection({
+      productService.getProductsByParams({
         pageSize: 10,
         section: "featuredProducts",
       }),

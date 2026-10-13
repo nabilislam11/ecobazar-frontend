@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import * as productService from '../../services/productService';
 import * as categoryService from '../../services/categoryService';
 import * as brandService from '../../services/brandService';
@@ -9,33 +9,60 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import Select from '../../components/common/Select';
 
 export default function Shop() {
-  const { category: categorySlug } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryId = searchParams.get('category') || '';
+  const search = searchParams.get('q') || undefined;
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState('latest');
-  const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState([]);
   const [maxPrice, setMaxPrice] = useState(100);
   const [minRating, setMinRating] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const handleCategoryChange = (id) => {
+    const nextParams = new URLSearchParams(searchParams);
 
+    if (id) {
+      nextParams.set('category', id);
+    } else {
+      nextParams.delete('category');
+    }
+
+    setPage(1);
+    setSearchParams(nextParams);
+  };
   useEffect(() => {
-    categoryService.getCategories().then(setCategories);
-    brandService.getBrands().then(setBrands);
-  }, []);
-  useEffect(() => {
-    if (!categorySlug) return;
-    categoryService.getCategoryBySlug(categorySlug).then((c) => c && setCategory(c.name));
-  }, [categorySlug]);
+    categoryService.getCategories()
+      .then((response) => {
+        const categoryList = Array.isArray(response)
+          ? response
+          : response?.data || [];
+
+        setCategories(categoryList);
+      })
+      .catch((error) => {
+        console.error("Categories fetch error:", error);
+        setCategories([]);
+      });
+
+    brandService.getBrands()
+      .then(setBrands)
+      .catch(console.error);
+  }, [])
 
   useEffect(() => {
     setLoading(true);
-    const search = searchParams.get('q') || undefined;
-    productService
-      .getProducts({ category: category || undefined, maxPrice, minRating: minRating || undefined, sort, page, pageSize: 12, search })
+    productService.getProductsByParams({
+      category: categoryId || undefined,
+      maxPrice,
+      minRating: minRating || undefined,
+      sort,
+      page,
+      pageSize: 12,
+      search,
+    })
       .then((res) => {
 
         const productList = Array.isArray(res?.items)
@@ -63,7 +90,7 @@ export default function Shop() {
         setLoading(false)
 
       })
-  }, [category, maxPrice, minRating, sort, page, searchParams]);
+  }, [categoryId, maxPrice, minRating, sort, page, search]);
 
   return (
     <div>
@@ -73,9 +100,22 @@ export default function Shop() {
           <div>
             <p className="mb-3 text-small font-semibold text-gray-900">Category</p>
             <div className="flex flex-col gap-2 text-small text-gray-700">
-              <button onClick={() => { setCategory(''); setPage(1); }} className={!category ? 'text-success font-medium' : ''}>All</button>
+              <button
+                onClick={() => handleCategoryChange('')}
+                className={!categoryId ? 'text-success font-medium' : ''}
+              >
+                All
+              </button>
               {categories.map((c) => (
-                <button key={c.id} onClick={() => { setCategory(c.name); setPage(1); }} className={category === c.name ? 'text-success font-medium text-left' : 'text-left'}>
+                <button
+                  key={c._id}
+                  onClick={() => handleCategoryChange(c._id)}
+                  className={
+                    categoryId === c._id
+                      ? 'text-success font-medium text-left'
+                      : 'text-left'
+                  }
+                >
                   {c.name} ({c.productCount})
                 </button>
               ))}

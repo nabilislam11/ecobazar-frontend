@@ -20,7 +20,7 @@ export const getProductBySlug = async (slug) => {
   const response = await api.get(`/auth/getsingleproduct/${slug}`);
   return response.data.data;
 };
-export const getProductsSection = async (params = {}) => {
+export const getProductsByParams = async (params = {}) => {
   const response = await api.get("/auth/getallproduct", {
     params,
   });

@@ -36,12 +36,20 @@ export default function Header() {
   }, [])
   const { id } = useParams()
   useEffect(() => {
+    if (!id) {
+      console.log("Category ID missing:", id);
+      return;
+    }
     const loadProductsByCategory = async () => {
       try {
+
         const response = await getProductsByCategory(id)
         setProducts(response)
       } catch (error) {
-        console.log(error);
+        console.error(
+          "Category product error:",
+          error.response?.data || error.message
+        );
 
 
       }

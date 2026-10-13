@@ -1,4 +1,3 @@
-import { data } from "autoprefixer";
 import api from "./api";
 
 export const createCategory = async (data) => {
@@ -14,7 +13,7 @@ export const getCategories = async () => {
   return response.data.data;
 };
 export const getProductsByCategory = async (id) => {
-  const response = await api.get("/auth//getproductsbycategory/:id");
+  const response = await api.get(`/auth/getproductsbycategory/${id}`);
 
   return response.data.data;
 };
