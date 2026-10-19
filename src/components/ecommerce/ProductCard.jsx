@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import Rating from './Rating';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import axios from 'axios';
 
 // Matches Figma "Product 5N" card component: image, name, price/sale, rating,
 // hover state reveals wishlist / quick-view / add-to-cart action icons.
@@ -12,24 +13,48 @@ export default function ProductCard({ product }) {
   const { toggleItem, isWishlisted } = useWishlist();
 
   const wishlisted = isWishlisted(product._id);
-
   // =========================
   // GET MAIN IMAGE
   // =========================
+  const API_BASE_URL = (
+    import.meta.env.VITE_API_BASE_URL ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
+  const handleCard = async (proId) => {
+    const userStr = localStorage.getItem("ecobazar_user")
+    console.log(userStr, "usersrt");
+
+    const user = userStr ? JSON.parse(userStr) : null
+    console.log(user, "user");
+    const userId = user?._id || user?.id
+    if (!userId) {
+      return toast.error("Please login first to add to cart!")
+
+    }
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/create/cart`, { proId: proId, userId: userId })
+      if (response.data.success) {
+        toast.success(response.data.message || "Product added to cart!");
+      }
+    } catch (error) {
+      console.error("Cart error:", error);
+      const errorMsg = error.response?.data?.message || "Something went wrong!";
+      toast.error(errorMsg);
+    }
+
+
+
+  }
 
   const mainImage =
     product.images?.find(
       (image) => image.isMain === true
     ) || product.images?.[0];
-  const API_BASE_URl = (
-    import.meta.env.VITE_API_BASE_URL ||
-    "http://localhost:5000"
-  ).replace(/\/+$/, "");
-
   const imageUrl = mainImage?.url
     ? mainImage.url.startsWith("http")
       ? mainImage.url
-      : `${API_BASE_URl}/${mainImage.url.replace(/\\/g, "/")
+      : `${API_BASE_URL}/${mainImage.url.replace(/\\/g, "/")
         .replace(/^\/+/, "")}`
     : "";
 
@@ -107,7 +132,7 @@ export default function ProductCard({ product }) {
 
       <button
         aria-label="Add to cart"
-        onClick={() => addItem(product)}
+        onClick={() => handleCard(product._id)}
         className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-success text-white shadow transition-transform hover:scale-105"
       >
         <ShoppingBag size={18} />

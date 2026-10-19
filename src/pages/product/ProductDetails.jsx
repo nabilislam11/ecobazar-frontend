@@ -13,6 +13,8 @@ import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 export default function ProductDetails() {
   const { slug } = useParams();
@@ -41,6 +43,36 @@ export default function ProductDetails() {
   }, [slug]);
 
   if (!product) return <Loader label="Loading product…" />;
+  const API_BASE_URL = (
+    import.meta.env.VITE_API_BASE_URL ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
+  const handleCard = async (proId) => {
+    const userStr = localStorage.getItem("ecobazar_user")
+    console.log(userStr, "usersrt");
+
+    const user = userStr ? JSON.parse(userStr) : null
+    console.log(user, "user");
+    const userId = user?._id || user?.id
+    if (!userId) {
+      return toast.error("Please login first to add to cart!")
+
+    }
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/create/cart`, { proId: proId, userId: userId })
+      if (response.data.success) {
+        toast.success(response.data.message || "Product added to cart!");
+      }
+    } catch (error) {
+      console.error("Cart error:", error);
+      const errorMsg = error.response?.data?.message || "Something went wrong!";
+      toast.error(errorMsg);
+    }
+
+
+
+  }
 
   return (
     <div>
@@ -78,7 +110,7 @@ export default function ProductDetails() {
               <span className="w-6 text-center">{qty}</span>
               <button onClick={() => setQty((q) => q + 1)}><Plus size={16} /></button>
             </div>
-            <Button onClick={() => addItem(product, qty)} size="lg" className="flex-1 gap-2">
+            <Button onClick={() => handleCard(product._id)} size="lg" className="flex-1 gap-2">
               <ShoppingBag size={18} /> Add to Cart
             </Button>
             <button
