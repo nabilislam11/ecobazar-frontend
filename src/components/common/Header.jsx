@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Heart, ShoppingBag, ChevronDown, PhoneCall, MapPin, Menu, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-import { getCategories, getProductsByCategory } from '../../services/categoryService';
+import { getCategories, } from '../../services/categoryService';
 
 export default function Header() {
   const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
   const [query, setQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
@@ -34,28 +33,6 @@ export default function Header() {
     }
     loadCategories()
   }, [])
-  const { id } = useParams()
-  useEffect(() => {
-    if (!id) {
-      console.log("Category ID missing:", id);
-      return;
-    }
-    const loadProductsByCategory = async () => {
-      try {
-
-        const response = await getProductsByCategory(id)
-        setProducts(response)
-      } catch (error) {
-        console.error(
-          "Category product error:",
-          error.response?.data || error.message
-        );
-
-
-      }
-    }
-    loadProductsByCategory()
-  }, [id])
 
   return (
     <header className="w-full bg-white">
@@ -141,7 +118,7 @@ export default function Header() {
               {categories.filter((category) => category.status === "active").map((category) => (
                 <Link
                   key={category._id}
-                  to={`/category/${category._id}`}
+                  to={`/shop?category/=${encodeURIComponent(category._id)}`}
                   className="shrink-0 text-small font-medium text-gray-200 transition-colors duration-200 hover:text-white"
                 >
                   {category.name}
@@ -182,7 +159,7 @@ export default function Header() {
                 .map((category) => (
                   <Link
                     key={category._id}
-                    to={`/category/${category._id}`}
+                    to={`/shop?categor=${encodeURIComponent(category._id)}`}
                     onClick={() => setMobileOpen(false)}
                     className="flex min-h-[44px] items-center rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-gray-200 hover:bg-gray-100 hover:text-gray-900"
                   >

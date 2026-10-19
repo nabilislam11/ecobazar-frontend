@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export default function CategoryCard({ category }) {
   return (
     <Link
-      to={`/shop/${category.slug}`}
+      to={`/shop?category=${encodeURIComponent(category._id)}`}
       className="group flex flex-col items-center gap-3 rounded-lg border border-gray-100 p-6 text-center transition-colors hover:border-success"
     >
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10 text-2xl">
