@@ -295,11 +295,13 @@ export default function ProductForm({ mode }) {
   // =========================
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
 
     if (files.length === 0) return;
 
-    if (files.length > 5) {
+    const remainingSlots = 5 - selectedImages.length
+
+    if (remainingSlots <= 0) {
       toast.error(
         "You can upload maximum 5 images"
       );
@@ -307,10 +309,18 @@ export default function ProductForm({ mode }) {
       e.target.value = "";
       return;
     }
+    const filesToAdd = files.slice(0, remainingSlots)
 
-    setSelectedImages(files);
+    setSelectedImages((prevImages) => [
+      ...prevImages,
+      ...filesToAdd
+    ]);
+    if (files.length > remainingSlots) {
+      toast.error("Maximum 5 images allowed. Extra images were not added.")
 
-    setMainImageIndex(0);
+    }
+
+    e.target.value = "";
   };
 
   // =========================
@@ -351,11 +361,19 @@ export default function ProductForm({ mode }) {
       return URL.createObjectURL(image);
     }
 
-    // Existing backend image
+    // Existing Cloudinary image or another absolute URL
     if (image?.url) {
-      return `http://localhost:5000/${image.url}`;
-    }
+      if (/^https?:\/\//i.test(image.url)) {
+        return image.url;
+      }
+      const baseURL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/+$/, "")
 
+      const imagePath = image.url
+        .replace(/\\/g, "/")
+        .replace(/^\/+/, "");
+
+      return `${baseURL}/${imagePath}`;
+    }
     return "";
   };
 
@@ -496,6 +514,7 @@ export default function ProductForm({ mode }) {
         index,
         _id: image instanceof File ? null : image._id,
         url: image instanceof File ? null : image.url,
+        public_id: image instanceof File ? null : image.public_id,
       }));
 
       formData.append(

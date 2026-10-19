@@ -22,7 +22,7 @@ export default function Verify() {
         console.log('Verifying token:', token);
 
         const response = await axios.post(
-          `http://localhost:5000/api/v1/auth/verifyemail/${token}`
+          `${import.meta.env.VITE_API_BASE_URL}/auth/verifyemail/${token}`
         );
 
         console.log('Verification response:', response.data);

@@ -10,12 +10,23 @@ export default function ProductGallery({ images = [], name }) {
     setActive(mainIndex >= 0 ? mainIndex : 0);
   }, [images]);
 
+  const API_BASE_URL = (
+    import.meta.env.VITE_API_BASE_URL ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
   const getImageUrl = (image) => {
     if (!image?.url) return "";
 
-    return image.url.startsWith("http")
-      ? image.url
-      : `http://localhost:5000/${image.url.replace(/\\/g, "/")}`;
+    const url = image.url.replace(/\\/g, "/");
+
+    // Cloudinary ba onno complete URL hole direct use korbe
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+
+    // Relative image path hole backend URL add korbe
+    return `${API_BASE_URL}/${url.replace(/^\/+/, "")}`;
   };
   return (
     <div>

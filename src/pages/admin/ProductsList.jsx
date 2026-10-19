@@ -152,9 +152,9 @@ export default function ProductsList() {
       >
 
         {products.map((p) => {
-          const mainImage = p.images?.find(
-            (image) => image.isMain === true
-          );
+          const mainImage =
+            p.images?.find((image) => image.isMain === true) ||
+            p.images?.[0];
           return (
             <tr key={p._id}>
 
@@ -163,9 +163,15 @@ export default function ProductsList() {
 
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-gray-50">
 
-                  {mainImage ? (
+                  {mainImage?.url ? (
                     <img
-                      src={`http://localhost:5000/${mainImage.url}`}
+                      src={
+                        mainImage.url.startsWith("http")
+                          ? mainImage.url
+                          : `${(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/+$/, "")}/${mainImage.url
+                            .replace(/\\/g, "/")
+                            .replace(/^\/+/, "")}`
+                      }
                       alt={p.title}
                       className="h-full w-full object-cover"
                     />

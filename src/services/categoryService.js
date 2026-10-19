@@ -9,6 +9,7 @@ export const createCategory = async (data) => {
 };
 export const getCategories = async () => {
   const response = await api.get("/auth/allcategory");
+  console.log(response.data);
 
   return response.data.data;
 };

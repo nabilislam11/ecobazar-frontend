@@ -21,11 +21,16 @@ export default function ProductCard({ product }) {
     product.images?.find(
       (image) => image.isMain === true
     ) || product.images?.[0];
+  const API_BASE_URl = (
+    import.meta.env.VITE_API_BASE_URL ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
 
   const imageUrl = mainImage?.url
     ? mainImage.url.startsWith("http")
       ? mainImage.url
-      : `http://localhost:5000/${mainImage.url.replace(/\\/g, "/")}`
+      : `${API_BASE_URl}/${mainImage.url.replace(/\\/g, "/")
+        .replace(/^\/+/, "")}`
     : "";
 
   return (

@@ -46,7 +46,7 @@ export const getProducts = async (params) => {
 
 // tomorrow — same signature, same consumers, zero UI changes
 export const getProducts = async (params) => {
-  const { data } = await api.get('/products', { params });
+  const { data } = await api.get("/products", { params });
   return data;
 };
 ```
