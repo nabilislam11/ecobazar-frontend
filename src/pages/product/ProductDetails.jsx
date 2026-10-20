@@ -12,9 +12,9 @@ import ProductGallery from '../../components/ecommerce/ProductGallery';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import { useCart } from '../../context/CartContext';
-import { useWishlist } from '../../context/WishlistContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useWishlist } from '../../context/WishlistContext';
 
 export default function ProductDetails() {
   const { slug } = useParams();
@@ -43,6 +43,7 @@ export default function ProductDetails() {
   }, [slug]);
 
   if (!product) return <Loader label="Loading product…" />;
+  const wishlisted = isWishlisted(product._Id)
   const API_BASE_URL = (
     import.meta.env.VITE_API_BASE_URL ||
     "http://localhost:5000"
@@ -60,7 +61,7 @@ export default function ProductDetails() {
 
     }
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/create/cart`, { proId: proId, userId: userId })
+      const response = await axios.post(`${API_BASE_URL}/auth/create/cart`, { proId: product._id, userId: userId, quantity: Number(qty) })
       if (response.data.success) {
         toast.success(response.data.message || "Product added to cart!");
       }
@@ -114,11 +115,22 @@ export default function ProductDetails() {
               <ShoppingBag size={18} /> Add to Cart
             </Button>
             <button
+              type="button"
               onClick={() => toggleItem(product)}
-              aria-label="Wishlist"
-              className={`flex h-12 w-12 items-center justify-center rounded-full border ${isWishlisted(product._id) ? 'border-error text-error' : 'border-gray-100 text-gray-700'}`}
+              aria-label={
+                wishlisted ? "Remove from wishlist" : "Add to wishlist"
+              }
+              aria-pressed={wishlisted}
+              className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all duration-200 ${wishlisted
+                ? "border-red-800 bg-red-800 text-white shadow-md"
+                : "border-gray-200 bg-white text-gray-700 hover:border-red-500 hover:bg-red-50 hover:text-red-600"
+                }`}
             >
-              <Heart size={18} fill={isWishlisted(product._id) ? 'currentColor' : 'none'} />
+              <Heart
+                size={18}
+                fill={wishlisted ? "currentColor" : "none"}
+                strokeWidth={wishlisted ? 2.5 : 2}
+              />
             </button>
           </div>
           <Button as={Link} to="/checkout" variant="border" size="lg" className="w-full" onClick={() => addItem(product, qty)}>
