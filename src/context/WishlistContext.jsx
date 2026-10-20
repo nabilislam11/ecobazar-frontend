@@ -1,4 +1,3 @@
-
 import {
   createContext,
   useCallback,
@@ -17,7 +16,6 @@ function getStoredUserId() {
     const user = JSON.parse(
       localStorage.getItem("ecobazar_user") || "null"
     );
-
     return user?._id || user?.id || null;
   } catch {
     return null;
@@ -40,21 +38,12 @@ export function WishlistProvider({ children }) {
     setLoading(true);
 
     try {
-      const response = await api.get(
-        `/auth/wishlist/${userId}`
-      );
+      const response = await api.get(`/auth/get/wishlist/${userId}`);
 
       const products = response.data?.data;
-
-      setItems(
-        Array.isArray(products) ? products : []
-      );
+      setItems(Array.isArray(products) ? products : []);
     } catch (error) {
-      console.error(
-        "Load wishlist error:",
-        error.response?.data || error
-      );
-
+      console.error("Load wishlist error:", error.response?.data || error);
       toast.error("Failed to load wishlist");
     } finally {
       setLoading(false);
@@ -64,30 +53,21 @@ export function WishlistProvider({ children }) {
   useEffect(() => {
     refreshWishlist();
 
-    // Login/logout-er por wishlist reload korar jonno
     const handleAuthChange = () => {
       refreshWishlist();
     };
 
-    window.addEventListener(
-      "ecobazar-auth-changed",
-      handleAuthChange
-    );
+    window.addEventListener("ecobazar-auth-changed", handleAuthChange);
 
     return () => {
-      window.removeEventListener(
-        "ecobazar-auth-changed",
-        handleAuthChange
-      );
+      window.removeEventListener("ecobazar-auth-changed", handleAuthChange);
     };
   }, [refreshWishlist]);
 
   // Add or remove a product through the backend
   const toggleItem = async (product) => {
     const productId =
-      typeof product === "string"
-        ? product
-        : product?._id || product?.id;
+      typeof product === "string" ? product : product?._id || product?.id;
 
     const userId = getStoredUserId();
 
@@ -102,18 +82,15 @@ export function WishlistProvider({ children }) {
     }
 
     try {
-      const response = await api.post(
-        "/auth/wishlist/toggle",
-        {
-          userId,
-          productId,
-        }
-      );
+      // 🔥 এখানে proId পাঠানো হচ্ছে (backend যেভাবে চায়)
+      const response = await api.post("/auth/create/wishlist", {
+        userId,
+        proId: productId, // ← productId না, proId
+      });
 
       if (!response.data?.success) {
         toast.error(
-          response.data?.message ||
-          "Could not update wishlist"
+          response.data?.message || "Could not update wishlist"
         );
         return;
       }
@@ -123,13 +100,9 @@ export function WishlistProvider({ children }) {
         if (typeof product === "object" && product?._id) {
           setItems((previous) => {
             const alreadyExists = previous.some(
-              (item) =>
-                String(item._id) === String(productId)
+              (item) => String(item._id) === String(productId)
             );
-
-            return alreadyExists
-              ? previous
-              : [...previous, product];
+            return alreadyExists ? previous : [...previous, product];
           });
         } else {
           await refreshWishlist();
@@ -137,10 +110,7 @@ export function WishlistProvider({ children }) {
       } else {
         // Remove product from local UI state
         setItems((previous) =>
-          previous.filter(
-            (item) =>
-              String(item._id) !== String(productId)
-          )
+          previous.filter((item) => String(item._id) !== String(productId))
         );
       }
 
@@ -151,23 +121,15 @@ export function WishlistProvider({ children }) {
           : "Removed from wishlist")
       );
     } catch (error) {
-      console.error(
-        "Toggle wishlist error:",
-        error.response?.data || error
-      );
-
+      console.error("Toggle wishlist error:", error.response?.data || error);
       toast.error(
-        error.response?.data?.message ||
-        "Failed to update wishlist"
+        error.response?.data?.message || "Failed to update wishlist"
       );
     }
   };
 
   const isWishlisted = (productId) =>
-    items.some(
-      (item) =>
-        String(item._id) === String(productId)
-    );
+    items.some((item) => String(item._id) === String(productId));
 
   const removeItem = async (productOrId) => {
     const productId =
@@ -180,10 +142,7 @@ export function WishlistProvider({ children }) {
     }
 
     await toggleItem(
-      items.find(
-        (item) =>
-          String(item._id) === String(productId)
-      )
+      items.find((item) => String(item._id) === String(productId))
     );
   };
 
@@ -211,9 +170,7 @@ export function useWishlist() {
   const context = useContext(WishlistContext);
 
   if (!context) {
-    throw new Error(
-      "useWishlist must be used within WishlistProvider"
-    );
+    throw new Error("useWishlist must be used within WishlistProvider");
   }
 
   return context;
