@@ -1,6 +1,6 @@
 // Cart persists to localStorage; shaped so a future backend cart endpoint
 // (GET/POST /api/cart) can replace the storage calls without touching the UI.
-const KEY = 'ecobazar_cart';
+const KEY = "ecobazar_cart";
 
 export const readCart = () => {
   try {

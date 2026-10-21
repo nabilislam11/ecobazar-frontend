@@ -99,7 +99,7 @@ export default function Header() {
               </span>
             </span>
             <span className="hidden flex-col leading-tight sm:flex">
-              <span className="text-[11px] text-gray-700">Shopping cart:</span>
+              <span className="text-[11px] text-gray-700">Shopping cart</span>
               <span className="text-small font-medium text-gray-900">${subtotal.toFixed(2)}</span>
             </span>
           </Link>

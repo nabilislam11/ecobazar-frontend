@@ -11,7 +11,7 @@ import axios from 'axios';
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
-
+  if (!product) return <Loader label="Loading product…" />;
   const wishlisted = isWishlisted(product._id);
   // =========================
   // GET MAIN IMAGE
@@ -21,31 +21,31 @@ export default function ProductCard({ product }) {
     "http://localhost:5000"
   ).replace(/\/+$/, "");
 
-  const handleCard = async (proId) => {
-    const userStr = localStorage.getItem("ecobazar_user")
-    console.log(userStr, "usersrt");
+  // const handleCard = async (proId) => {
+  //   const userStr = localStorage.getItem("ecobazar_user")
+  //   console.log(userStr, "usersrt");
 
-    const user = userStr ? JSON.parse(userStr) : null
-    console.log(user, "user");
-    const userId = user?._id || user?.id
-    if (!userId) {
-      return toast.error("Please login first to add to cart!")
+  //   const user = userStr ? JSON.parse(userStr) : null
+  //   console.log(user, "user");
+  //   const userId = user?._id || user?.id
+  //   if (!userId) {
+  //     return toast.error("Please login first to add to cart!")
 
-    }
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/create/cart`, { proId: proId, userId: userId })
-      if (response.data.success) {
-        toast.success(response.data.message || "Product added to cart!");
-      }
-    } catch (error) {
-      console.error("Cart error:", error);
-      const errorMsg = error.response?.data?.message || "Something went wrong!";
-      toast.error(errorMsg);
-    }
+  //   }
+  //   try {
+  //     const response = await axios.post(`${API_BASE_URL}/auth/create/cart`, { proId: proId, userId: userId })
+  //     if (response.data.success) {
+  //       toast.success(response.data.message || "Product added to cart!");
+  //     }
+  //   } catch (error) {
+  //     console.error("Cart error:", error);
+  //     const errorMsg = error.response?.data?.message || "Something went wrong!";
+  //     toast.error(errorMsg);
+  //   }
 
 
 
-  }
+  // }
 
   const mainImage =
     product.images?.find(
@@ -132,7 +132,7 @@ export default function ProductCard({ product }) {
 
       <button
         aria-label="Add to cart"
-        onClick={() => handleCard(product._id)}
+        onClick={() => addItem(product._id)}
         className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-success text-white shadow transition-transform hover:scale-105"
       >
         <ShoppingBag size={18} />

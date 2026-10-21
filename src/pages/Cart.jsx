@@ -7,10 +7,17 @@ import EmptyState from '../components/common/EmptyState';
 import toast from 'react-hot-toast';
 
 export default function Cart() {
+  // const { items, subtotal, clearCart } = useCart();
+  // const [coupon, setCoupon] = useState('');
+  // const shipping = subtotal > 50 || subtotal === 0 ? 0 : 5;
+  // const total = subtotal + shipping;
+
   const { items, subtotal, clearCart } = useCart();
   const [coupon, setCoupon] = useState('');
-  const shipping = subtotal > 50 || subtotal === 0 ? 0 : 5;
-  const total = subtotal + shipping;
+
+  const safeSubtotal = Number(subtotal) || 0;
+  const shipping = safeSubtotal > 50 || safeSubtotal === 0 ? 0 : 5;
+  const total = safeSubtotal + shipping;
 
   if (!items.length) {
     return (
@@ -28,7 +35,7 @@ export default function Cart() {
     <div className="container-page grid grid-cols-1 gap-10 py-10 lg:grid-cols-[1fr_360px]">
       <div>
         <h1 className="mb-6 text-2xl font-semibold text-gray-900">Shopping Cart</h1>
-        {items.map((item) => <CartItem key={item.id} item={item} />)}
+        {items.map((item) => <CartItem key={item._id} item={item} />)}
         <div className="mt-6 flex items-center justify-between">
           <Button as={Link} to="/shop" variant="border" size="sm">Continue Shopping</Button>
           <button onClick={clearCart} className="text-small text-error hover:underline">Clear Cart</button>
@@ -51,7 +58,7 @@ export default function Cart() {
           </button>
         </div>
         <div className="space-y-2 border-t border-gray-100 pt-4 text-small">
-          <div className="flex justify-between text-gray-700"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
+          <div className="flex justify-between text-gray-700"><span>Subtotal</span><span>${safeSubtotal.toFixed(2)}</span></div>
           <div className="flex justify-between text-gray-700"><span>Shipping</span><span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span></div>
           <div className="flex justify-between border-t border-gray-100 pt-2 text-medium font-semibold text-gray-900"><span>Total</span><span>${total.toFixed(2)}</span></div>
         </div>

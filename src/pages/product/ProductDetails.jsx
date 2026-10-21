@@ -12,8 +12,6 @@ import ProductGallery from '../../components/ecommerce/ProductGallery';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import { useCart } from '../../context/CartContext';
-import axios from 'axios';
-import toast from 'react-hot-toast';
 import { useWishlist } from '../../context/WishlistContext';
 
 export default function ProductDetails() {
@@ -31,7 +29,6 @@ export default function ProductDetails() {
     productService.getProductBySlug(slug).then((p) => {
       setProduct(p);
       if (p) {
-
         setRelated([]);
         reviewService
           .getReviews(p._id)
@@ -43,77 +40,88 @@ export default function ProductDetails() {
   }, [slug]);
 
   if (!product) return <Loader label="Loading product…" />;
-  const wishlisted = isWishlisted(product._Id)
-  const API_BASE_URL = (
-    import.meta.env.VITE_API_BASE_URL ||
-    "http://localhost:5000"
-  ).replace(/\/+$/, "");
-
-  const handleCard = async (proId) => {
-    const userStr = localStorage.getItem("ecobazar_user")
-    console.log(userStr, "usersrt");
-
-    const user = userStr ? JSON.parse(userStr) : null
-    console.log(user, "user");
-    const userId = user?._id || user?.id
-    if (!userId) {
-      return toast.error("Please login first to add to cart!")
-
-    }
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/create/cart`, { proId: product._id, userId: userId, quantity: Number(qty) })
-      if (response.data.success) {
-        toast.success(response.data.message || "Product added to cart!");
-      }
-    } catch (error) {
-      console.error("Cart error:", error);
-      const errorMsg = error.response?.data?.message || "Something went wrong!";
-      toast.error(errorMsg);
-    }
+  const wishlisted = isWishlisted(product._id);
 
 
 
-  }
+
 
   return (
     <div>
-      <Breadcrumb items={[{ label: 'Shop', to: '/shop' }, { label: product.title }]} />
+      <Breadcrumb
+        items={[
+          { label: 'Shop', to: '/shop' },
+          { label: product.title },
+        ]}
+      />
+
       <div className="container-page grid grid-cols-1 gap-10 py-10 lg:grid-cols-2">
         <div>
-          <ProductGallery
-            images={product.images}
-            name={product.title}
-          />
+          <ProductGallery images={product.images} name={product.title} />
         </div>
+
         <div>
-          <h1 className="mb-2 text-2xl font-semibold text-gray-900">{product.title}</h1>
+          <h1 className="mb-2 text-2xl font-semibold text-gray-900">
+            {product.title}
+          </h1>
+
           <div className="mb-4 flex items-center gap-3">
             <Rating value={product.rating} count={product.reviewCount} />
             <span className="text-tiny text-gray-400">SKU: {product.sku}</span>
           </div>
+
           <div className="mb-4 flex items-center gap-3">
-            <span className="text-2xl font-semibold text-gray-900">${product.price.toFixed(2)}</span>
+            <span className="text-2xl font-semibold text-gray-900">
+              ${product.price.toFixed(2)}
+            </span>
             {product.oldPrice && (
               <span className="text-medium text-gray-400 line-through">
                 ${Number(product.oldPrice).toFixed(2)}
               </span>
             )}
-            {product.discount > 0 && <span className="rounded bg-error/10 px-2 py-1 text-tiny font-medium text-error">-{product.discount}%</span>}
+            {product.discount > 0 && (
+              <span className="rounded bg-error/10 px-2 py-1 text-tiny font-medium text-error">
+                -{product.discount}%
+              </span>
+            )}
           </div>
+
           <p className="mb-6 text-small text-gray-700">{product.description}</p>
+
           <p className="mb-6 text-small text-gray-400">
-            Stock: <span className={product.stock > 0 ? 'text-success' : 'text-error'}>{product.stock > 0 ? `${product.stock} available` : 'Out of stock'}</span>
+            Stock:{" "}
+            <span
+              className={
+                product.stock > 0 ? "text-success" : "text-error"
+              }
+            >
+              {product.stock > 0
+                ? `${product.stock} available`
+                : "Out of stock"}
+            </span>
           </p>
 
           <div className="mb-6 flex items-center gap-4">
             <div className="flex items-center gap-3 rounded-pill border border-gray-100 px-3 py-2">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus size={16} /></button>
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))}>
+                <Minus size={16} />
+              </button>
               <span className="w-6 text-center">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)}><Plus size={16} /></button>
+              <button onClick={() => setQty((q) => q + 1)}>
+                <Plus size={16} />
+              </button>
             </div>
-            <Button onClick={() => handleCard(product._id)} size="lg" className="flex-1 gap-2">
+
+            <Button
+              onClick={() => addItem(product, qty)}
+              size="lg"
+              className="flex-1 gap-2"
+              disabled={product.stock < 1}
+            >
               <ShoppingBag size={18} /> Add to Cart
             </Button>
+
+            {/* 🔥 Wishlist button - polished design */}
             <button
               type="button"
               onClick={() => toggleItem(product)}
@@ -121,42 +129,71 @@ export default function ProductDetails() {
                 wishlisted ? "Remove from wishlist" : "Add to wishlist"
               }
               aria-pressed={wishlisted}
-              className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all duration-200 ${wishlisted
-                ? "border-red-800 bg-red-800 text-white shadow-md"
-                : "border-gray-200 bg-white text-gray-700 hover:border-red-500 hover:bg-red-50 hover:text-red-600"
-                }`}
+              className={`
+                group relative flex h-12 w-12 items-center justify-center rounded-full
+                border transition-all duration-300 ease-out
+                ${wishlisted
+                  ? "border-red-700 bg-red-700 text-white shadow-lg shadow-red-700/30 scale-105"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-red-400 hover:bg-red-50 hover:text-red-600 hover:scale-105"
+                }
+              `}
             >
               <Heart
-                size={18}
+                size={20}
                 fill={wishlisted ? "currentColor" : "none"}
                 strokeWidth={wishlisted ? 2.5 : 2}
+                className={`transition-transform duration-300 ${wishlisted ? "scale-110" : "group-hover:scale-110"
+                  }`}
               />
             </button>
           </div>
-          <Button as={Link} to="/checkout" variant="border" size="lg" className="w-full" onClick={() => addItem(product, qty)}>
+
+          <Button
+            as={Link}
+            to="/checkout"
+            variant="border"
+            size="lg"
+            className="w-full"
+            onClick={() => addItem(product, qty)}
+          >
             Buy Now
           </Button>
         </div>
       </div>
 
-      {/* Tabs: Description / Additional Info / Reviews */}
+      {/* Tabs */}
       <div className="container-page pb-14">
         <div className="mb-6 flex gap-8 border-b border-gray-100">
-          {['description', 'additional', 'reviews'].map((t) => (
+          {["description", "additional", "reviews"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`border-b-2 pb-3 text-small font-medium capitalize ${tab === t ? 'border-success text-success' : 'border-transparent text-gray-400'}`}
+              className={`border-b-2 pb-3 text-small font-medium capitalize ${tab === t
+                ? "border-success text-success"
+                : "border-transparent text-gray-400"
+                }`}
             >
-              {t === 'additional' ? 'Additional Info' : t} {t === 'reviews' && `(${reviews.length})`}
+              {t === "additional" ? "Additional Info" : t}{" "}
+              {t === "reviews" && `(${reviews.length})`}
             </button>
           ))}
         </div>
-        {tab === 'description' && <p className="max-w-3xl text-small text-gray-700">{product.description}</p>}
-        {tab === 'additional' && (
+
+        {tab === "description" && (
+          <p className="max-w-3xl text-small text-gray-700">
+            {product.description}
+          </p>
+        )}
+
+        {tab === "additional" && (
           <table className="w-full max-w-xl text-small">
             <tbody>
-              {[['Brand', product.brand], ['Category', product.category], ['SKU', product.sku], ['Stock', product.stock]].map(([k, v]) => (
+              {[
+                ["Brand", product.brand],
+                ["Category", product.category],
+                ["SKU", product.sku],
+                ["Stock", product.stock],
+              ].map(([k, v]) => (
                 <tr key={k} className="border-b border-gray-100">
                   <td className="w-40 py-3 text-gray-400">{k}</td>
                   <td className="py-3 text-gray-900">{v}</td>
@@ -165,16 +202,23 @@ export default function ProductDetails() {
             </tbody>
           </table>
         )}
-        {tab === 'reviews' && (
+
+        {tab === "reviews" && (
           <div className="max-w-2xl">
-            {reviews.length ? reviews.map((r) => <ReviewCard key={r._id} review={r} />) : <p className="text-small text-gray-400">No reviews yet.</p>}
+            {reviews.length ? (
+              reviews.map((r) => <ReviewCard key={r._id} review={r} />)
+            ) : (
+              <p className="text-small text-gray-400">No reviews yet.</p>
+            )}
           </div>
         )}
       </div>
 
       {related.length > 0 && (
         <div className="container-page pb-16">
-          <h2 className="mb-6 text-[22px] font-semibold text-gray-900">Related Products</h2>
+          <h2 className="mb-6 text-[22px] font-semibold text-gray-900">
+            Related Products
+          </h2>
           <ProductGrid products={related} columns={4} />
         </div>
       )}
