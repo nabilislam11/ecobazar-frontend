@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
@@ -6,19 +6,27 @@ import { useCart } from '../context/CartContext';
 import * as orderService from '../services/orderService';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 const paymentMethods = ['Cash on Delivery', 'PayPal', 'Amazon Pay'];
 
 export default function Checkout() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal } = useCart();
   const navigate = useNavigate();
   const [payment, setPayment] = useState(paymentMethods[0]);
 
   // 🔥 Delivery Zone State 
   const [deliveryZone, setDeliveryZone] = useState('inner');
   const [submitting, setSubmitting] = useState(false);
-
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { user } = useAuth()
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: {
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      email: user?.email || ""
+    }
+  });
 
   // 🔥 Shipping Calculation Logic
   let shipping = 0;
@@ -31,53 +39,73 @@ export default function Checkout() {
   const total = subtotal + shipping;
 
   const onSubmit = async (data) => {
+    console.log("CHECKOUT SUBMIT DATA:", data);
+    console.log("CHECKOUT USER:", user);
+    console.log("CHECKOUT USER ID:", user?._id || user?.id);
     setSubmitting(true);
     try {
-      const order = await orderService.createOrder({
-        customer: `${data.firstName} ${data.lastName}`,
-        total,
-        items: items.map((i) => ({
-          productId: i.product?._id || i.id, // backend data structure অনুযায়ী 
-          name: i.product?.title || i.name,
-          price: i.product?.price || i.price,
-          quantity: i.quantity,
-          subtotal: (i.product?.price || i.price) * i.quantity
-        })),
-        shipping: {
-          name: `${data.firstName} ${data.lastName}`,
-          address: data.address,
-          email: data.email,
-          phone: data.phone,
-          zone: deliveryZone, // জোন ব্যাকএন্ডে পাঠাচ্ছি
-          notes: data.orderNotes || "" // অর্ডার নোটস 
-        },
-        shippingCost: shipping,
-        paymentMethod: payment,
-      });
+      const paymentPayload = {
+        userId: user?._id || user?.id,
 
-      clearCart();
-      toast.success('Order placed successfully!');
-      navigate('/order-success', { state: { orderId: order.id } });
+        cus_name: `${data.firstName} ${data.lastName}`.trim(),
+        cus_phone: data.phone,
+        cus_email: data.email,
+
+        cus_add1: data.address,
+        cus_add2: "",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+
+        orderNotes: data.orderNotes || "",
+        deliveryZone,
+        shippingCost: shipping,
+      };
+      console.log("PAYMENT REQUEST STARTING...");
+      console.log("PAYMENT PAYLOAD:", paymentPayload);
+      const response = await api.post("/auth/payment", paymentPayload)
+      console.log("PAYMENT RESPONSE:", response.data);
+      if (response.data?.payment_url) {
+        console.log("REDIRECTING TO AAMARPAY...");
+
+        window.location.assign(response.data.payment_url);
+        return;
+      }
+
+      toast.error("Payment URL was not received. Please try again.");
+
     } catch (error) {
-      console.error(error);
-      toast.error('Failed to place order!');
-    } finally {
+      console.error("Payment initiation error:", error);
+      toast.error('Failed to initiate payment!');
       setSubmitting(false);
     }
   };
 
+  useEffect(() => {
+    if (!items.length) {
+      navigate("/cart", { replace: true });
+    }
+  }, [items.length, navigate]);
+
   if (!items.length) {
-    navigate('/cart');
     return null;
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="container-page grid grid-cols-1 gap-10 py-10 lg:grid-cols-[1fr_360px]">
+    <form onSubmit={handleSubmit(onSubmit, (formErrors) => {
+      console.log("CHECKOUT VALIDATION ERRORS:", formErrors);
+      toast.error("Please fill in all required fields");
+    })} className="container-page grid grid-cols-1 gap-10 py-10 lg:grid-cols-[1fr_360px]">
       <div className="space-y-8">
         <div>
           <h2 className="mb-4 text-medium font-semibold text-gray-900">Customer Information</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="First Name" {...register('firstName', { required: true })} error={errors.firstName && 'Required'} />
+            <Input
+              label="First Name"
+              placeholder={user?.firstName || "First Name"}
+              {...register("firstName", { required: true })}
+              error={errors.firstName && "Required"}
+            />
             <Input label="Last Name" {...register('lastName', { required: true })} error={errors.lastName && 'Required'} />
             <Input label="Email" type="email" {...register('email', { required: true })} error={errors.email && 'Required'} />
             <Input label="Phone" type="tel" {...register('phone', { required: true })} error={errors.phone && 'Required'} />
@@ -101,7 +129,7 @@ export default function Checkout() {
                     onChange={() => setDeliveryZone('inner')}
                     className="accent-success"
                   />
-                  <span>Inner Dhaka ($70)</span>
+                  <span>Inner Dhaka (৳70)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer rounded border border-gray-100 p-3 text-small w-full sm:w-auto">
                   <input
@@ -111,7 +139,7 @@ export default function Checkout() {
                     onChange={() => setDeliveryZone('outer')}
                     className="accent-success"
                   />
-                  <span>Outer Dhaka ($140)</span>
+                  <span>Outer Dhaka (৳140)</span>
                 </label>
               </div>
             </div>
@@ -159,8 +187,8 @@ export default function Checkout() {
             <span>${subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-gray-700">
-            <span>Shipping {subtotal > 1000 && <span className="text-success text-xs bg-green-50 px-2 py-0.5 rounded ml-1">Over $1000</span>}</span>
-            <span>{shipping === 0 ? <span className="text-success font-medium">Free</span> : `$${shipping.toFixed(2)}`}</span>
+            <span>Shipping {subtotal > 1000 && <span className="text-success text-xs bg-green-50 px-2 py-0.5 rounded ml-1">Over ৳1000</span>}</span>
+            <span>{shipping === 0 ? <span className="text-success font-medium">Free</span> : `৳${shipping.toFixed(2)}`}</span>
           </div>
           <div className="flex justify-between border-t border-gray-100 pt-3 text-medium font-bold text-gray-900">
             <span>Total</span>
@@ -169,7 +197,7 @@ export default function Checkout() {
         </div>
 
         <Button type="submit" size="lg" disabled={submitting} className="mt-6 w-full">
-          {submitting ? 'Placing Order…' : `Place Order ($${total.toFixed(2)})`}
+          {submitting ? 'Placing Order…' : `Place Order (৳${total.toFixed(2)})`}
         </Button>
       </div>
     </form>
