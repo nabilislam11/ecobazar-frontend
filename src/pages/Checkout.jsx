@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
@@ -9,11 +9,12 @@ import Button from '../components/common/Button';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
-const paymentMethods = ['Cash on Delivery', 'PayPal', 'Amazon Pay'];
+const paymentMethods = ['Cash on Delivery', "Aamarpay(Online Payment"];
 
 export default function Checkout() {
-  const { items, subtotal } = useCart();
+  const { items, subtotal, clearCart } = useCart();
   const navigate = useNavigate();
+  const skipEmptyCartRedirect = useRef(false);
   const [payment, setPayment] = useState(paymentMethods[0]);
 
   // 🔥 Delivery Zone State 
@@ -38,11 +39,52 @@ export default function Checkout() {
 
   const total = subtotal + shipping;
 
+  // const onSubmit = async (data) => {
+  //   console.log("CHECKOUT SUBMIT DATA:", data);
+  //   console.log("CHECKOUT USER:", user);
+  //   console.log("CHECKOUT USER ID:", user?._id || user?.id);
+  //   setSubmitting(true);
+  //   try {
+  //     const paymentPayload = {
+  //       userId: user?._id || user?.id,
+
+  //       cus_name: `${data.firstName} ${data.lastName}`.trim(),
+  //       cus_phone: data.phone,
+  //       cus_email: data.email,
+
+  //       cus_add1: data.address,
+  //       cus_add2: "",
+  //       cus_city: "Dhaka",
+  //       cus_state: "Dhaka",
+  //       cus_postcode: "1000",
+
+  //       orderNotes: data.orderNotes || "",
+  //       deliveryZone,
+  //       shippingCost: shipping,
+  //     };
+  //     console.log("PAYMENT REQUEST STARTING...");
+  //     console.log("PAYMENT PAYLOAD:", paymentPayload);
+  //     const response = await api.post("/auth/payment", paymentPayload)
+  //     console.log("PAYMENT RESPONSE:", response.data);
+  //     if (response.data?.payment_url) {
+  //       console.log("REDIRECTING TO AAMARPAY...");
+
+  //       window.location.assign(response.data.payment_url);
+  //       return;
+  //     }
+
+  //     toast.error("Payment URL was not received. Please try again.");
+
+  //   } catch (error) {
+  //     console.error("Payment initiation error:", error);
+  //     toast.error('Failed to initiate payment!');
+  //     setSubmitting(false);
+  //   }
+  // };
+
   const onSubmit = async (data) => {
-    console.log("CHECKOUT SUBMIT DATA:", data);
-    console.log("CHECKOUT USER:", user);
-    console.log("CHECKOUT USER ID:", user?._id || user?.id);
     setSubmitting(true);
+
     try {
       const paymentPayload = {
         userId: user?._id || user?.id,
@@ -61,22 +103,69 @@ export default function Checkout() {
         deliveryZone,
         shippingCost: shipping,
       };
-      console.log("PAYMENT REQUEST STARTING...");
-      console.log("PAYMENT PAYLOAD:", paymentPayload);
-      const response = await api.post("/auth/payment", paymentPayload)
-      console.log("PAYMENT RESPONSE:", response.data);
-      if (response.data?.payment_url) {
-        console.log("REDIRECTING TO AAMARPAY...");
 
-        window.location.assign(response.data.payment_url);
+      if (!paymentPayload.userId) {
+        throw new Error("Please log in before placing your order.");
+      }
+
+      // 1. Cash on Delivery: create a normal order
+      if (payment === "Cash on Delivery") {
+        const response = await api.post(
+          "/auth/orders/cod",
+          paymentPayload
+        );
+
+        const result = response.data;
+        const order = result?.data;
+
+        if (!result?.success || !order?.tranId) {
+          throw new Error(
+            result?.message || "Could not place your COD order."
+          );
+        }
+
+        // The backend has saved the order and cleared its cart.
+        skipEmptyCartRedirect.current = true;
+        clearCart();
+
+        navigate(
+          `/order-success?payment=cod&tranId=${encodeURIComponent(
+            order.tranId
+          )}`,
+          { replace: true }
+        );
+
         return;
       }
 
-      toast.error("Payment URL was not received. Please try again.");
+      // 2. Aamarpay: start online payment
+      if (payment === "Aamarpay (Online Payment)") {
+        const response = await api.post(
+          "/auth/payment",
+          paymentPayload
+        );
 
+        if (response.data?.payment_url) {
+          window.location.assign(response.data.payment_url);
+          return;
+        }
+
+        throw new Error(
+          response.data?.message ||
+          "Payment URL was not received. Please try again."
+        );
+      }
+
+      throw new Error("Please select a valid payment method.");
     } catch (error) {
-      console.error("Payment initiation error:", error);
-      toast.error('Failed to initiate payment!');
+      console.error("CHECKOUT ERROR:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to place your order."
+      );
+
       setSubmitting(false);
     }
   };
