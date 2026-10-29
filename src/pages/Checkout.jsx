@@ -9,7 +9,7 @@ import Button from '../components/common/Button';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
-const paymentMethods = ['Cash on Delivery', "Aamarpay(Online Payment"];
+const paymentMethods = ['Cash on Delivery', "Aamarpay(Online Payment)"];
 
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
@@ -109,6 +109,7 @@ export default function Checkout() {
       }
 
       // 1. Cash on Delivery: create a normal order
+      console.log("SELECTED PAYMENT:", payment);
       if (payment === "Cash on Delivery") {
         const response = await api.post(
           "/auth/orders/cod",
@@ -139,7 +140,8 @@ export default function Checkout() {
       }
 
       // 2. Aamarpay: start online payment
-      if (payment === "Aamarpay (Online Payment)") {
+      console.log("SELECTED PAYMENT:", payment);
+      if (payment === "Aamarpay(Online Payment)") {
         const response = await api.post(
           "/auth/payment",
           paymentPayload
