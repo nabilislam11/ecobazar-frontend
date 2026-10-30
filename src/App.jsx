@@ -77,8 +77,15 @@ export default function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
-          <Route path='/payment-faield' element={<PaymentFailed />} />
-          <Route path='/payment-cancelled' element={<PaymentCancelled />} />
+          <Route
+            path="/payment-failed"
+            element={<PaymentFailed />}
+          />
+
+          <Route
+            path="/payment-cancelled"
+            element={<PaymentCancelled />}
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
