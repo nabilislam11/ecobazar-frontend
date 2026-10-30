@@ -6,7 +6,7 @@ import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import Loader from './components/common/Loader';
-import PaymentFailed from './pages/Paymentfailed';
+import PaymentFailed from './pages/PaymentFailed';
 import PaymentCancelled from './pages/PaymentCancelled';
 
 // Customer pages
