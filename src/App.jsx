@@ -6,6 +6,8 @@ import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import Loader from './components/common/Loader';
+import PaymentFailed from './pages/Paymentfailed';
+import PaymentCancelled from './pages/PaymentCancelled';
 
 // Customer pages
 const Home = lazy(() => import('./pages/Home'));
@@ -75,6 +77,8 @@ export default function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path='/payment-faield' element={<PaymentFailed />} />
+          <Route path='/payment-cancelled' element={<PaymentCancelled />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />

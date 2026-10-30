@@ -16,8 +16,8 @@ export default function Cart() {
   const [coupon, setCoupon] = useState('');
 
   const safeSubtotal = Number(subtotal) || 0;
-  const shipping = safeSubtotal > 50 || safeSubtotal === 0 ? 0 : 5;
-  const total = safeSubtotal + shipping;
+  // const shipping = safeSubtotal > 50 || safeSubtotal === 0 ? 0 : 5;
+  const total = safeSubtotal
 
   if (!items.length) {
     return (
@@ -59,7 +59,7 @@ export default function Cart() {
         </div>
         <div className="space-y-2 border-t border-gray-100 pt-4 text-small">
           <div className="flex justify-between text-gray-700"><span>Subtotal</span><span>${safeSubtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between text-gray-700"><span>Shipping</span><span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span></div>
+          {/* <div className="flex justify-between text-gray-700"><span>Shipping</span><span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span></div> */}
           <div className="flex justify-between border-t border-gray-100 pt-2 text-medium font-semibold text-gray-900"><span>Total</span><span>${total.toFixed(2)}</span></div>
         </div>
         <Button as={Link} to="/checkout" size="lg" className="mt-6 w-full">Proceed to Checkout</Button>
